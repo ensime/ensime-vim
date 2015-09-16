@@ -26,7 +26,7 @@ You should also export your BROWSER variable, for example in your bashrc:
 
 All the following commands should be ran from your scala directory.
 
-First you need ensime sbt plugin:    
+First you need ensime sbt plugin (Or if you're using gradle, you can use [ensime-gradle](https://github.com/ensime/ensime-gradle)):    
     
     $ echo addSbtPlugin("org.ensime" % "ensime-sbt" % "0.1.7") \
         >> ~/.sbt/0.13/plugins/plugins.sbt
