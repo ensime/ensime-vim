@@ -14,7 +14,7 @@ ENSIME for the Editor of the Beast (Vim)
 # howto
 
 You need `websocket-client` python package:
-
+    
     $ sudo pip install websocket-client
 
 You should also export your BROWSER variable, for example in your bashrc:
@@ -27,6 +27,8 @@ First you need ensime sbt plugin:
     
     $ echo 'addSbtPlugin("org.ensime" % "ensime-sbt" % "0.1.7")' \
         >> ~/.sbt/0.13/plugins/plugins.sbt
+
+Update: You can use the latest ensime-sbt version i.e. 0.2.1. 
 
 Then, generate .ensime file:
 
@@ -79,6 +81,33 @@ And export them to vim plugin format via:
     $ neo2vim rplugin/python/ensime.py ftplugin/scala_ensime.vim
 
 All merges should be done on dev branch before being merged onto master
+
+# Additional helpful tips for Vim users
+
+You need not use `Vundle`. Just go to `~/.vim/bundle` and clone `ensime-vim`.
+
+Inside `~/.vim/bundle/ensime-vim` folder, edit the following file:
+
+    vim ensime_launcher/__init__.py 
+
+Find the method `build_sbt`. In the `src` string, add blank lines between
+`SBT` statements (though it should not matter for `SBT 0.13.7` onwards, there
+can be problems). 
+
+Go back to your project folder and in `build.sbt` add the following:
+
+    resolvers += "Netbeans" at "http://bits.netbeans.org/nexus/content/groups"
+    libraryDependencies ++= Seq(
+    "org.netbeans.api" % "org-netbeans-api-java" % "RELEASE731",
+    "org.netbeans.api" % "org-netbeans-modules-java-source" % "RELEASE731"
+    )
+
+Just go and open a Scala file and first time you will have `SBT` downloading 
+tons of jars and finally you should be able to use `ensime-vim`. Some useful
+tips:
+
+    C-x C-o -- for auto-assist
+    :help ensime-vim -- for other Ensime goodies
 
 # integrating with your own plugin
 
