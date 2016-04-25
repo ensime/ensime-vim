@@ -63,6 +63,7 @@ commands = {
     "syntastic_show_notes": "silent SyntasticCheck ensime",
     "get_cursor_word": 'expand("<cword>")',
     "select_item_list": 'inputlist({})',
+    "append_line": 'call append({}, {!r})'
 }
 
 
@@ -78,7 +79,7 @@ class EnsimeClient(object):
             self.vim_command("highlight_enerror")
             self.vim_command("set_updatetime")
             self.vim_command("set_ensime_completion")
-            self.vim.command("autocmd FileType package_info nnoremap <buffer> <Space> :EnPackageDecl<CR>")
+            self.vim.command("autocmd FileType package_info nnoremap <buffer> <Space> :call EnPackageDecl()<CR>")
             self.vim.command("autocmd FileType package_info  setlocal splitright")
 
         def setup_logger_and_paths():
@@ -1269,7 +1270,7 @@ class Ensime(object):
         client.symbol_by_name(args, range)
 
     @execute_with_client()
-    def com_en_package_decl(self, client, args, range=None):
+    def fun_en_package_decl(self, client, args, range=None):
         client.open_decl_for_inspector_symbol()
 
     @execute_with_client()

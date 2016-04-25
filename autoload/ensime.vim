@@ -99,8 +99,8 @@ function! ensime#com_en_declaration_split(args, range) abort
     return s:call_plugin('com_en_declaration_split', [a:args, a:range])
 endfunction
 
-function! ensime#com_en_package_decl(args, range) abort
-    return s:call_plugin('com_en_package_decl', [a:args, a:range])
+function! ensime#fun_en_package_decl(args, range) abort
+    return s:call_plugin('fun_en_package_decl', [a:args, a:range])
 endfunction
 
 function! ensime#com_en_symbol_by_name(args, range) abort
