@@ -60,7 +60,7 @@ commands = {
     "syntastic_enable": "if exists('g:SyntasticRegistry') | let &runtimepath .= ',' . {!r} | endif",
     "syntastic_append_notes": 'if ! exists("b:ensime_scala_notes") | let b:ensime_scala_notes = [] | endif | let b:ensime_scala_notes += {}',
     "syntastic_reset_notes": 'let b:ensime_scala_notes = []',
-    "syntastic_show_notes": "silent SyntasticCheck ensime",
+    "syntastic_show_notes": "silent! SyntasticCheck ensime",
     "get_cursor_word": 'expand("<cword>")',
     "select_item_list": 'inputlist({})',
 }
