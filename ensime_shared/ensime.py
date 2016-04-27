@@ -47,7 +47,7 @@ commands = {
     "new_vertical_window": "{}vnew {}",
     "new_vertical_scratch": "{}vnew {} | setlocal nobuflisted buftype=nofile bufhidden=wipe noswapfile",
     "doautocmd_bufleave": "doautocmd BufLeave",
-    "doautocmd_bufreadenter": "doautocmd BufRead,BufEnter",
+    "doautocmd_bufreadenter": "doautocmd BufReadPre,BufRead,BufEnter",
     "filetype": "&filetype",
     "set_filetype": "set filetype={}",
     "go_to_char": "goto {}",
