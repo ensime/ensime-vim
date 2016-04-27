@@ -141,13 +141,12 @@ class EnsimeLauncher(object):
         sbt_cmd = "sbt -Dsbt.log.noformat=true -batch saveClasspath"
         inside_nvim = int(self.vim.eval("has('nvim')"))
         if inside_nvim:
-            cmd = "terminal"
             import tempfile
             tmp_dir = tempfile.gettempdir()
             flag_file = "{}/ensime-vim-classpath.flag".format(tmp_dir)
             sbt_cmd += "; echo $? > {}".format(flag_file)
             self.vim.command("echo 'Waiting for generation of classpath...'")
-            self.vim.command("terminal ({} && {})".format(cd_cmd, sbt_cmd))
+            self.vim.command("terminal sh \"({} && {})\"".format(cd_cmd, sbt_cmd))
 
             # Block execution when sbt is run
             waiting_for_flag = True
