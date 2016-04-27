@@ -2,5 +2,5 @@ build:
   image: ensime/ensime:latest
   pull: true
   commands:
-    - pip install python-coveralls
+    - pip install python-coveralls sexpdata
     - python spec/ensime.py
