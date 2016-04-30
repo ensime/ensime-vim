@@ -10,9 +10,6 @@ venv: requirements.txt
 	#. $(ACTIVATE); $(INSTALL)
 	touch $(ACTIVATE)
 
-pytest:
-	. $(ACTIVATE); py.test -rf -l -s -x  --cov-report term-missing --cov **/*.py
-
 lint: venv
 	. $(ACTIVATE); flake8 --max-complexity=10 *.py **/*.py
 
@@ -22,5 +19,8 @@ autopep8: venv
 clean:
 	rm -rf .venv
 
-test:
-	coverage run --include=ensime_launcher/__init__.py,rplugin/python/ensime.py lettuce && coverage html
+run-tests:
+
+	@echo "Running ensime-vim lettuce tests"
+	lettuce ensime_shared/spec/features
+

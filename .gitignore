@@ -1,5 +1,8 @@
 *.pyc
 .coverage
+/.cache
+/.venv
+.gitignore
 htmlcov
 .gitignore
 .ropeproject*

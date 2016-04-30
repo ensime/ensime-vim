@@ -3,4 +3,4 @@ build:
   pull: true
   commands:
     - pip install python-coveralls
-    - python spec/ensime.py
+    - make run-tests

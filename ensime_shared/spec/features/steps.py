@@ -7,15 +7,22 @@ from ensime_harness import TestVim
 from ensime_shared.launcher import EnsimeLauncher
 
 testDir = "ensime_shared/spec/features"
+Failure = "Failure"
 
-@step('There is an existing ensime config (?P<conf_path>resources/\w+.conf)')
+@step('The config (?P<conf_path>resources/\w+.conf)')
 def existing_config(step, conf_path):
     world.launcher = EnsimeLauncher(TestVim())
     world.config_path = path.abspath(testDir + "/" + conf_path)
 
+
 @step('We load the config')
 def load_config(step):
-    world.conf = world.launcher.parse_conf(world.config_path)
+    c = None
+    try:
+        c = world.launcher.parse_conf(world.config_path)
+    except:
+        c = Failure
+    world.conf = c
 
 @step('We extract the name (testing)')
 def extract_testing(step, expected_name):
@@ -31,8 +38,12 @@ def extract_scala_version(step, version):
 
 @step("We can parse nested expressions")
 def check_deep_nesting(step):
-    value = world.conf["nest"][0]["l1"][0][0]["value"]
-    assert value == "abc", \
-        "Got %s" % value
+    name = world.conf["nest"][0]["name"]
+    targets = world.conf["nest"][0]["targets"]
+    assert (name == "nested" and targets == ["abc", "xyz"]) , \
+        "Got %s" % name
 
-
+@step("We receive a failure")
+def check_failed_conf(step):
+    assert world.conf == Failure , \
+        "Should have failed"
