@@ -1,5 +1,5 @@
-Pytest-cov
-flake8
-coveralls
-autopep8
-lettuce
+Pytest-cov==2.2.1
+flake8==2.5.2
+coveralls==1.1
+autopep8==1.2.1
+lettuce==0.2.21
