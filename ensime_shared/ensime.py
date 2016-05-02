@@ -23,9 +23,6 @@ if sys.version_info > (3, 0):
 else:
     from Queue import Queue
 
-# Dictionary mapping a shorthand key to a vim command string, for various
-# commands run from within the plugin.
-# Used in vim_command.
 commands = {
     "enerror_matcher": "matchadd('EnErrorStyle', '\\%{}l\\%>{}c\\%<{}c')",
     "highlight_enerror": "highlight EnErrorStyle ctermbg=red gui=underline",
