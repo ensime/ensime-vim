@@ -145,7 +145,6 @@ class EnsimeLauncher(object):
             import re
             tmp_dir = tempfile.gettempdir()
             flag_file = "{}/ensime-vim-classpath.flag".format(tmp_dir)
-            sbt_cmd += "; echo $? > {}".format(flag_file)
             self.vim.command("echo 'Waiting for generation of classpath...'")
             if re.match(".+fish$", self.vim.eval("&shell")):
                 sbt_cmd += "; echo $status > {}".format(flag_file)
