@@ -737,13 +737,16 @@ class EnsimeClient(DebuggerClient, object):
             "file": self.path()})
 
     def inspect_package(self, args):
+        pkg = None
         if not args:
-            msg = commands["display_message"].format("Must provide a fully qualifed package name")
+            pkg = Util.extract_packageName(self.vim.current.buffer)
+            msg = commands["display_message"].format("Using Currently Focused Package")
             self.vim.command(msg)
-            return
+        else:
+            pkg = args[0]
         self.send_request({
             "typehint": "InspectPackageByPathReq",
-            "path": args[0]
+            "path": pkg
         })
 
     def open_declaration(self, args, range=None):

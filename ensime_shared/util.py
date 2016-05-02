@@ -21,6 +21,22 @@ class Util:
         if not os.path.exists(path):
             os.makedirs(path)
 
+    @staticmethod
+    def extract_packageName(lines):
+        foundPacakge = False
+        package = ""
+
+        for line in lines:
+            if "package" not in line and not foundPacakge:
+                continue
+            elif "package" in line:
+                if not package:
+                    package = line.split("package ")[-1].replace("\n", "")
+                else:
+                    package += "." + line.split("package ")[-1].replace("\n", "")
+            else:
+                break
+        return package
 
 @contextmanager
 def catch(exception, handler=lambda e: None):
@@ -37,3 +53,4 @@ def module_exists(module_name):
         __import__(module_name)
         res = True
     return res
+
