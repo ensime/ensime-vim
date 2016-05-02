@@ -739,7 +739,7 @@ class EnsimeClient(DebuggerClient, object):
     def inspect_package(self, args):
         pkg = None
         if not args:
-            pkg = Util.extract_packageName(self.vim.current.buffer)
+            pkg = Util.extract_package_name(self.vim.current.buffer)
             msg = commands["display_message"].format("Using Currently Focused Package")
             self.vim.command(msg)
         else:

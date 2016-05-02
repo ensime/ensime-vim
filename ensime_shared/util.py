@@ -22,7 +22,7 @@ class Util:
             os.makedirs(path)
 
     @staticmethod
-    def extract_packageName(lines):
+    def extract_package_name(lines):
         foundPacakge = False
         package = ""
 
