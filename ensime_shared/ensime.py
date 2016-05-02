@@ -142,7 +142,7 @@ class EnsimeClient(DebuggerClient, object):
         self.debug_thread_id = None
         self.running = True
 
-        thread = Thread(target=self.receive_messages, args=())
+        thread = Thread(target=self.queue_poll, args=())
         thread.daemon = True
         thread.start()
 
