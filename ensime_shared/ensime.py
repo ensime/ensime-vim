@@ -860,10 +860,14 @@ class EnsimeClient(DebuggerClient, object):
             {"interactive": False}
         )
 
-    def symbol_search(self):
+    def symbol_search(self, search_terms):
         """Search for symbols matching a set of keywords"""
+        if not rename_to:
+            msg = commands["display_message"].format("Must provide symbols to search for")
+            self.vim.command(msg)
+            return
         self.log("symbol_search: in")
-        terms = self.ask_input("Search Symbol: ").split()
+        terms = search_terms.split()
         req = {
             "typehint": "PublicSymbolSearchReq",
             "keywords": terms,
@@ -1287,7 +1291,7 @@ class Ensime(object):
 
     @execute_with_client()
     def com_en_sym_search(self, client, args, range=None):
-        client.symbol_search()
+        client.symbol_search(args)
 
     @execute_with_client()
     def com_en_package_inspect(self, client, args, range=None):
@@ -1334,3 +1338,5 @@ class Ensime(object):
     @execute_with_client()
     def send_request(self, client, request):
         client.send_request(request)
+
+
