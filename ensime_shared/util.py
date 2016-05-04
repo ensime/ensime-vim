@@ -23,11 +23,11 @@ class Util:
 
     @staticmethod
     def extract_package_name(lines):
-        foundPacakge = False
+        found_package = False
         package = ""
 
         for line in lines:
-            if "package" not in line and not foundPacakge:
+            if "package" not in line and not found_package:
                 continue
             elif "package" in line:
                 if not package:
