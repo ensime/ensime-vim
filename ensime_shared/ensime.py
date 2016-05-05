@@ -887,15 +887,14 @@ class EnsimeClient(DebuggerClient, object):
 
     def symbol_search(self, search_terms):
         """Search for symbols matching a set of keywords"""
-        if not rename_to:
+        if not search_terms:
             msg = commands["display_message"].format("Must provide symbols to search for")
             self.vim.command(msg)
             return
         self.log("symbol_search: in")
-        terms = search_terms.split()
         req = {
             "typehint": "PublicSymbolSearchReq",
-            "keywords": terms,
+            "keywords": search_terms,
             "maxResults": 25
         }
         self.send_request(req)
