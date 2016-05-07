@@ -1099,7 +1099,6 @@ class EnsimeClient(DebuggerClient, object):
             result = []
             # Only handle snd invocation if fst has already been done
             if self.completion_started:
-                self.vim_command("until_first_char_word")
                 # Unqueing messages until we get suggestions
                 self.unqueue(timeout=self.completion_timeout, should_wait=True)
                 suggestions = self.suggestions or []
