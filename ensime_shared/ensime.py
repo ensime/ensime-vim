@@ -1211,6 +1211,10 @@ class Ensime(object):
         cmd = commands["filetype"]
         return self.vim.eval(cmd) == 'scala'
 
+    def is_java_file(self):
+        cmd = commands["filetype"]
+        return self.vim.eval(cmd) == 'java'
+
     @execute_with_client()
     def com_en_toggle_teardown(self, client, args, range=None):
         client.do_toggle_teardown(None, None)
@@ -1344,7 +1348,7 @@ class Ensime(object):
     @execute_with_client()
     def fun_en_complete_func(self, client, findstart_and_base, base=None):
         """Invokable function from vim and neovim to perform completion."""
-        if self.is_scala_file():
+        if self.is_scala_file() or self.is_java_file():
             client.log("{} {}".format(findstart_and_base, base))
             if not (isinstance(findstart_and_base, list)):
                 # Invoked by vim

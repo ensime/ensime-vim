@@ -18,7 +18,7 @@ import neovim
 
 # Params for autocmd by default
 autocmd_params = {
-    "pattern": "*.scala",
+    "pattern": "*.scala|*.java",
     "eval": 'expand("<afile>")',
     "sync": True
 }
