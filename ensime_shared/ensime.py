@@ -108,6 +108,10 @@ class EnsimeClient(DebuggerClient, object):
             self.log_dir = self.ensime_cache \
                 if osp.isdir(self.ensime_cache) else "/tmp/"
             self.log_file = os.path.join(self.log_dir, "ensime-vim.log")
+            with open(self.log_file, "w") as f:
+                now = datetime.datetime.now()
+                tm = now.strftime("%Y-%m-%d %H:%M:%S.%f")
+                f.write("{}: {} - {}\n".format(tm, "Initializing project", config_dirname))
 
         def fetch_runtime_paths():
             """Fetch all the runtime paths of ensime-vim plugin."""
