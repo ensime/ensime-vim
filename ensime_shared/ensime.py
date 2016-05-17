@@ -105,8 +105,9 @@ class EnsimeClient(DebuggerClient, object):
             self.config_path = osp.abspath(config_path)
             config_dirname = osp.dirname(self.config_path)
             self.ensime_cache = osp.join(config_dirname, ".ensime_cache")
-            self.log_dir = self.ensime_cache \
-                if osp.isdir(self.ensime_cache) else "/tmp/"
+            if not osp.isdir(self.ensime_cache):
+                os.mkdir(self.ensime_cache)
+            self.log_dir = self.ensime_cache
             self.log_file = os.path.join(self.log_dir, "ensime-vim.log")
             with open(self.log_file, "w") as f:
                 now = datetime.datetime.now()
