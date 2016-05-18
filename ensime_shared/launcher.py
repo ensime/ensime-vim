@@ -100,7 +100,7 @@ class EnsimeLauncher(object):
             Util.read_file(classpath_file), java_home)
 
         for x in os.listdir(self.base_dir):
-            if fnmatch.fnmatch(x, "ensime_" + scala_version[:4] + "*.jar"):
+            if fnmatch.fnmatch(x, "ensime_" + scala_version[:4] + "*-assembly.jar"):
                 classpath = os.path.join(self.base_dir, x) + ":" + classpath
 
         return classpath
