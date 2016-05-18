@@ -63,7 +63,7 @@ class EnsimeLauncher(object):
         self.vim = vim
         self.base_dir = os.path.abspath(base_dir)
         self.ensime_version = "0.9.10-SNAPSHOT"
-        self.sbt_version = "0.13.8"
+        self.sbt_version = "0.13.11"
 
     def launch(self, conf_path):
         conf = self.parse_conf(conf_path)
@@ -142,11 +142,16 @@ class EnsimeLauncher(object):
         inside_nvim = int(self.vim.eval("has('nvim')"))
         if inside_nvim:
             import tempfile
+            import re
             tmp_dir = tempfile.gettempdir()
             flag_file = "{}/ensime-vim-classpath.flag".format(tmp_dir)
-            sbt_cmd += "; echo $? > {}".format(flag_file)
             self.vim.command("echo 'Waiting for generation of classpath...'")
-            self.vim.command("terminal sh \"({} && {})\"".format(cd_cmd, sbt_cmd))
+            if re.match(".+fish$", self.vim.eval("&shell")):
+                sbt_cmd += "; echo $status > {}".format(flag_file)
+                self.vim.command("terminal {}; and {}".format(cd_cmd, sbt_cmd))
+            else:
+                sbt_cmd += "; echo $? > {}".format(flag_file)
+                self.vim.command("terminal ({} && {})".format(cd_cmd, sbt_cmd))
 
             # Block execution when sbt is run
             waiting_for_flag = True

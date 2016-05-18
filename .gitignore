@@ -4,6 +4,8 @@
 /.venv
 .gitignore
 htmlcov
+/.cache
+/.venv
 .gitignore
 .ropeproject*
 __pycache__

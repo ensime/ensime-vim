@@ -69,7 +69,23 @@ commands = {
 
 
 class EnsimeClient(DebuggerClient, object):
-    """Represents an Ensime client per ensime configuration path."""
+    """Represents an Ensime client per ensime configuration path.
+
+    Upon construction, this will either connect to an existing ensime server, or
+    else start up a new ensime service to talk to.
+
+    Communication with the server is done over a websocket (`self.ws`). Messages
+    are sent to the server in the calling thread, while messages are received on
+    a separate background thread and enqueued in `self.queue` upon receipt.
+
+    Each call to the server contains a `callId` field with an integer ID,
+    generated from `self.call_id`. Responses echo back the `callId` field so
+    that appropriate handlers can be invoked.
+
+    Responses also contain a `typehint` field in their `payload` field, which
+    contains the type of the response. This is used to key into `self.handlers`,
+    which stores the a handler per response type.
+    """
 
     def __init__(self, vim, launcher, config_path):
         def setup_vim():
@@ -92,6 +108,10 @@ class EnsimeClient(DebuggerClient, object):
             self.log_dir = self.ensime_cache \
                 if osp.isdir(self.ensime_cache) else "/tmp/"
             self.log_file = os.path.join(self.log_dir, "ensime-vim.log")
+            with open(self.log_file, "w") as f:
+                now = datetime.datetime.now()
+                tm = now.strftime("%Y-%m-%d %H:%M:%S.%f")
+                f.write("{}: {} - {}\n".format(tm, "Initializing project", config_dirname))
 
         def fetch_runtime_paths():
             """Fetch all the runtime paths of ensime-vim plugin."""
@@ -120,6 +140,7 @@ class EnsimeClient(DebuggerClient, object):
 
         self.matches = []
         self.errors = []
+        # Queue for messages received from the ensime server.
         self.queue = Queue()
         self.suggestions = None
         self.completion_timeout = 10  # seconds
@@ -141,7 +162,10 @@ class EnsimeClient(DebuggerClient, object):
 
         self.debug_thread_id = None
         self.running = True
-        Thread(target=self.queue_poll, args=()).start()
+
+        thread = Thread(target=self.queue_poll, args=())
+        thread.daemon = True
+        thread.start()
 
         self.handlers = {}
         self.register_responses_handlers()
@@ -284,6 +308,7 @@ class EnsimeClient(DebuggerClient, object):
                 self.ensime_server = gconfig["ensime_server"].format(port)
             with catch(Exception, disable_completely):
                 from websocket import create_connection
+                # Use the default timeout (no timeout).
                 self.ws = create_connection(self.ensime_server)
             if self.ws:
                 self.send_request({"typehint": "ConnectionInfoReq"})
@@ -293,6 +318,7 @@ class EnsimeClient(DebuggerClient, object):
 
     def shutdown_server(self):
         """Shut down server if it is alive."""
+        self.log("shutdown_server: in")
         if self.ensime and self.toggle_teardown:
             self.ensime.stop()
 
@@ -737,13 +763,16 @@ class EnsimeClient(DebuggerClient, object):
             "file": self.path()})
 
     def inspect_package(self, args):
+        pkg = None
         if not args:
-            msg = commands["display_message"].format("Must provide a fully qualifed package name")
+            pkg = Util.extract_package_name(self.vim.current.buffer)
+            msg = commands["display_message"].format("Using Currently Focused Package")
             self.vim.command(msg)
-            return
+        else:
+            pkg = args[0]
         self.send_request({
             "typehint": "InspectPackageByPathReq",
-            "path": args[0]
+            "path": pkg
         })
 
     def open_declaration(self, args, range=None):
@@ -860,13 +889,16 @@ class EnsimeClient(DebuggerClient, object):
             {"interactive": False}
         )
 
-    def symbol_search(self):
+    def symbol_search(self, search_terms):
         """Search for symbols matching a set of keywords"""
+        if not search_terms:
+            msg = commands["display_message"].format("Must provide symbols to search for")
+            self.vim.command(msg)
+            return
         self.log("symbol_search: in")
-        terms = self.ask_input("Search Symbol: ").split()
         req = {
             "typehint": "PublicSymbolSearchReq",
-            "keywords": terms,
+            "keywords": search_terms,
             "maxResults": 25
         }
         self.send_request(req)
@@ -1071,7 +1103,6 @@ class EnsimeClient(DebuggerClient, object):
             result = []
             # Only handle snd invocation if fst has already been done
             if self.completion_started:
-                self.vim_command("until_first_char_word")
                 # Unqueing messages until we get suggestions
                 self.unqueue(timeout=self.completion_timeout, should_wait=True)
                 suggestions = self.suggestions or []
@@ -1183,6 +1214,10 @@ class Ensime(object):
         cmd = commands["filetype"]
         return self.vim.eval(cmd) == 'scala'
 
+    def is_java_file(self):
+        cmd = commands["filetype"]
+        return self.vim.eval(cmd) == 'java'
+
     @execute_with_client()
     def com_en_toggle_teardown(self, client, args, range=None):
         client.do_toggle_teardown(None, None)
@@ -1287,7 +1322,7 @@ class Ensime(object):
 
     @execute_with_client()
     def com_en_sym_search(self, client, args, range=None):
-        client.symbol_search()
+        client.symbol_search(args)
 
     @execute_with_client()
     def com_en_package_inspect(self, client, args, range=None):
@@ -1316,7 +1351,7 @@ class Ensime(object):
     @execute_with_client()
     def fun_en_complete_func(self, client, findstart_and_base, base=None):
         """Invokable function from vim and neovim to perform completion."""
-        if self.is_scala_file():
+        if self.is_scala_file() or self.is_java_file():
             client.log("{} {}".format(findstart_and_base, base))
             if not (isinstance(findstart_and_base, list)):
                 # Invoked by vim
@@ -1334,3 +1369,5 @@ class Ensime(object):
     @execute_with_client()
     def send_request(self, client, request):
         client.send_request(request)
+
+
