@@ -134,6 +134,9 @@ class EnsimeLauncher(object):
         Util.write_file(
             os.path.join(project_dir, "project", "build.properties"),
             "sbt.version={}".format(self.sbt_version))
+        Util.write_file(
+            os.path.join(project_dir, "project", "plugins.sbt"),
+            """addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0-M11")""")
 
         # Synchronous update of the classpath via sbt
         # see https://github.com/ensime/ensime-vim/issues/29
