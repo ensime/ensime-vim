@@ -4,6 +4,7 @@ import socket
 import subprocess
 import time
 import shutil
+import fnmatch
 
 import sexpdata
 
@@ -95,8 +96,14 @@ class EnsimeLauncher(object):
         if not os.path.exists(classpath_file):
             if not self.generate_classpath(scala_version, classpath_file):
                 return None
-        return "{}:{}/lib/tools.jar".format(
+        classpath = "{}:{}/lib/tools.jar".format(
             Util.read_file(classpath_file), java_home)
+
+        for x in os.listdir(self.base_dir):
+            if fnmatch.fnmatch(x, "ensime_" + scala_version[:4] + "*.jar"):
+                classpath = os.path.join(self.base_dir, x) + ":" + classpath
+
+        return classpath
 
     def start_process(self, conf_path, classpath, cache_dir, java_home,
                       java_flags):
