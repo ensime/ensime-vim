@@ -173,6 +173,9 @@ class EnsimeClient(DebuggerClient, object):
         self.websocket_exists = module_exists("websocket")
         if not self.websocket_exists:
             self.tell_module_missing("websocket-client")
+        if not module_exists("sexpdata"):
+            self.tell_module_missing("sexpdata")
+
 
     def log(self, what):
         """Log `what` in a file at the .ensime_cache folder or /tmp."""
