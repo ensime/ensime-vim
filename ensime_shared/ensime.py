@@ -955,24 +955,52 @@ class EnsimeClient(DebuggerClient, object):
         types = [", ".join(p) for p in tparams]
         return "[{}]".format(types)
 
+    def formatted_param_type(self, ptype):
+        """Return the short name for a type. Special treatment for by-name and var args"""
+        pt_name = ptype["name"]
+        if pt_name.startswith("<byname>"):
+            pt_name = pt_name.replace("<byname>[", "=> ")[:-1]
+        elif pt_name.startswith("<repeated>"):
+            pt_name = pt_name.replace("<repeated>[", "")[:-1] + "*"
+        return pt_name
+
+    def formatted_param_section(self, section):
+        """Format a parameters list. Supports the implicit list"""
+        implicit = "implicit " if section["isImplicit"] else ""
+        s_params = [[p[0], self.formatted_param_type(p[1])] for p in section["params"]]
+        return "({}{})".format(implicit, self.concat_params(s_params))
+
     def formatted_completion_type(self, completion):
-        f_result = completion["typeSig"]["result"]
+        """Use result type for methods. Return just the member type otherwise"""
+        t_info = completion["typeInfo"]
+        return t_info["name"] if not completion["isCallable"] else t_info["resultType"]["name"]
+
+    def formatted_completion_sig(self, completion):
+        """Regenerate signature for methods. Return just the name otherwise"""
+        f_result = completion["name"]
         if not completion["isCallable"]:
             # It's a raw type
             return f_result
-        elif len(completion["typeSig"]["sections"]) == 0:
+        elif len(completion["typeInfo"]["paramSections"]) == 0:
             return f_result
 
         # It's a function type
-        f_params = completion["typeSig"]["sections"][0]
-        ps = self.concat_params(f_params) if f_params else ""
-        return "({}) => {}".format(ps, f_result)
+        sections = completion["typeInfo"]["paramSections"]
+        f_sections = [self.formatted_param_section(ps) for ps in sections]
+        return u"{}{}".format(f_result, "".join(f_sections))
 
     def completion_to_suggest(self, completion):
         """Convert from a completion to a suggestion."""
-        res = {"word": completion["name"],
-               "menu": "[scala]",
-               "kind": self.formatted_completion_type(completion)}
+        res = {
+            # We use just the method name as completion
+            "word": completion["name"],
+            # We show the whole method signature in the popup
+            "abbr": self.formatted_completion_sig(completion),
+            # We show method result/field type in a sepatate column
+            "menu": self.formatted_completion_type(completion),
+            # We allow duplicates, needed to show overloaded methods
+            "dup": 1
+        }
         self.log("completion_to_suggest: {}".format(res))
         return res
 
