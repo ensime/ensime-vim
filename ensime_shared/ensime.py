@@ -105,8 +105,12 @@ class EnsimeClient(DebuggerClient, object):
             self.config_path = osp.abspath(config_path)
             config_dirname = osp.dirname(self.config_path)
             self.ensime_cache = osp.join(config_dirname, ".ensime_cache")
-            self.log_dir = self.ensime_cache \
-                if osp.isdir(self.ensime_cache) else "/tmp/"
+            self.log_dir = self.ensime_cache
+            if not osp.isdir(self.ensime_cache):
+                try:
+                    os.mkdir(self.ensime_cache)
+                except OSError as exception:
+                    self.log_dir = "/tmp/"
             self.log_file = os.path.join(self.log_dir, "ensime-vim.log")
             with open(self.log_file, "w") as f:
                 now = datetime.datetime.now()
@@ -173,6 +177,9 @@ class EnsimeClient(DebuggerClient, object):
         self.websocket_exists = module_exists("websocket")
         if not self.websocket_exists:
             self.tell_module_missing("websocket-client")
+        if not module_exists("sexpdata"):
+            self.tell_module_missing("sexpdata")
+
 
     def log(self, what):
         """Log `what` in a file at the .ensime_cache folder or /tmp."""

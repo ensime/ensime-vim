@@ -4,6 +4,7 @@ import socket
 import subprocess
 import time
 import shutil
+import fnmatch
 
 import sexpdata
 
@@ -62,7 +63,7 @@ class EnsimeLauncher(object):
     def __init__(self, vim, base_dir=_default_base_dir):
         self.vim = vim
         self.base_dir = os.path.abspath(base_dir)
-        self.ensime_version = "0.9.10-SNAPSHOT"
+        self.ensime_version = "1.0.0-SNAPSHOT"
         self.sbt_version = "0.13.11"
 
     def launch(self, conf_path):
@@ -95,8 +96,14 @@ class EnsimeLauncher(object):
         if not os.path.exists(classpath_file):
             if not self.generate_classpath(scala_version, classpath_file):
                 return None
-        return "{}:{}/lib/tools.jar".format(
+        classpath = "{}:{}/lib/tools.jar".format(
             Util.read_file(classpath_file), java_home)
+
+        for x in os.listdir(self.base_dir):
+            if fnmatch.fnmatch(x, "ensime_" + scala_version[:4] + "*-assembly.jar"):
+                classpath = os.path.join(self.base_dir, x) + ":" + classpath
+
+        return classpath
 
     def start_process(self, conf_path, classpath, cache_dir, java_home,
                       java_flags):
@@ -134,6 +141,9 @@ class EnsimeLauncher(object):
         Util.write_file(
             os.path.join(project_dir, "project", "build.properties"),
             "sbt.version={}".format(self.sbt_version))
+        Util.write_file(
+            os.path.join(project_dir, "project", "plugins.sbt"),
+            """addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0-M11")""")
 
         # Synchronous update of the classpath via sbt
         # see https://github.com/ensime/ensime-vim/issues/29
