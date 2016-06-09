@@ -641,7 +641,7 @@ class EnsimeClient(DebuggerClient, object):
                 try:
                     if webbrowser.open(url):
                         self.log("opened {}".format(url))
-                except webbrowser.Error, e:
+                except webbrowser.Error as e:
                     log_msg = "handle_string_response: webbrowser error: {}"
                     self.log(log_msg.format(e))
                     self.raw_message(feedback["manual_doc"].format(url))
