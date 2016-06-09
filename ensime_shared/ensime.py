@@ -137,6 +137,8 @@ class EnsimeClient(DebuggerClient, object):
         self.launcher = launcher
         self.ensime_server = None
 
+        self.buffering_typechecks = False
+        self.buffered_payload = {}
         self.call_id = 0
         self.call_options = {}
         self.refactor_id = 1
@@ -428,10 +430,10 @@ class EnsimeClient(DebuggerClient, object):
         self.handlers["IndexerReadyEvent"] = f_indexer
         f_indexer = lambda ci, p: self.message("analyzer_ready")
         self.handlers["AnalyzerReadyEvent"] = f_indexer
-        self.handlers["NewScalaNotesEvent"] = (self.handle_new_scala_notes_event_with_syntastic
-                if self.vim_eval('syntastic_available') else self.handle_new_scala_notes_event)
+        self.handlers["NewScalaNotesEvent"] = self.__delegate_scala_notes
         self.handlers["BasicTypeInfo"] = self.show_type
         self.handlers["ArrowTypeInfo"] = self.show_ftype
+        self.handlers["FullTypeCheckCompleteEvent"] = self.handle_typecheck_complete
         self.handlers["StringResponse"] = self.handle_string_response
         self.handlers["CompletionInfoList"] = self.handle_completion_info_list
         self.handlers["TypeInspectInfo"] = self.handle_type_inspect
@@ -444,8 +446,23 @@ class EnsimeClient(DebuggerClient, object):
         self.handlers["ImportSuggestions"] = self.handle_import_suggestions
         self.handlers["PackageInfo"] = self.handle_package_info
 
+    def __delegate_scala_notes(self, call_id, payload):
+        if self.buffering_typechecks:
+            for note in payload['notes']:
+                self.buffered_payload['notes'].append(note)
+        elif self.vim_eval('syntastic_available'):
+            self.handle_new_scala_notes_event_with_syntastic(call_id, payload)
+        else:
+            self.handle_new_scala_notes_event
+
     def handle_debug_vm_error(self, call_id, payload):
         self.vim.command(commands['display_message'].format("Error. Check ensime-vim log for details."))
+
+    def handle_typecheck_complete(self, call_id, payload):
+        if self.buffering_typechecks:
+            self.handle_new_scala_notes_event_with_syntastic(None, self.buffered_payload)
+            self.buffering_typechecks = False
+            self.buffered_payload = {}
 
     def handle_import_suggestions(self, call_id, payload):
         imports = list(sorted(set(suggestion['name'].replace('$', '.') for suggestions in payload['symLists'] for suggestion in suggestions)))
@@ -593,7 +610,7 @@ class EnsimeClient(DebuggerClient, object):
                 'valid': 1
             } for note in payload["notes"] \
                     if current_file == os.path.abspath(note['file']) and \
-                        is_note_correct(note)
+                    is_note_correct(note)
         )
 
         json_list = json.dumps(loclist)
@@ -784,6 +801,13 @@ class EnsimeClient(DebuggerClient, object):
             "typehint": "InspectPackageByPathReq",
             "path": pkg
         })
+
+    def buffer_typecheck(self, args, range=None):
+        self.buffering_typechecks = True
+        self.buffered_payload = {
+            'notes': []
+        }
+        self.type_check("")
 
     def open_declaration(self, args, range=None):
         self.log("open_declaration: in")
@@ -1204,6 +1228,10 @@ class Ensime(object):
     @execute_with_client()
     def com_en_type_check(self, client, args, range=None):
         client.type_check_cmd(None)
+
+    @execute_with_client()
+    def com_en_buf_type_check(self, client, args, range=None):
+        client.buffer_typecheck(None)
 
     @execute_with_client()
     def com_en_type(self, client, args, range=None):

@@ -48,6 +48,10 @@ class NeovimEnsime(Ensime):
     def com_en_type(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_type(*args, **kwargs)
 
+    @neovim.command('EnBufferedTypeCheck', **command_params)
+    def com_en_buf_type_check(self, *args, **kwargs):
+        super(NeovimEnsime, self).com_en_buf_type_check(*args, **kwargs)
+
     @neovim.command('EnSearch', **command_params)
     def com_en_sym_search(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_sym_search(*args, **kwargs)
