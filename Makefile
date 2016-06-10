@@ -4,7 +4,7 @@ TESTREQS = pip install -Ur test-requirements.txt
 INSTALL = pip install -e '.'
 
 venv: requirements.txt
-	test -d .venv || virtualenv -p python3 .venv
+	test -d .venv || virtualenv -p python2 .venv
 	. $(ACTIVATE); $(REQS)
 	. $(ACTIVATE); $(TESTREQS)
 	#. $(ACTIVATE); $(INSTALL)
@@ -22,5 +22,5 @@ clean:
 run-tests:
 
 	@echo "Running ensime-vim lettuce tests"
-	lettuce ensime_shared/spec/features
+	. $(ACTIVATE); lettuce ensime_shared/spec/features
 

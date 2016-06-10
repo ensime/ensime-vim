@@ -5,4 +5,4 @@ build:
     - pip install -r requirements.txt
     - pip install -r test-requirements.txt
     - pip install python-coveralls
-    - make run-tests
+    - lettuce ensime_shared/spec/features
