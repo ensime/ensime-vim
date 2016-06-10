@@ -2,7 +2,6 @@ build:
   image: ensime/ensime:latest
   pull: true
   commands:
-    - pip install -r requirements.txt
-    - pip install -r test-requirements.txt
     - pip install python-coveralls
-    - lettuce ensime_shared/spec/features
+    - make run-tests
+

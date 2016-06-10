@@ -1,13 +1,11 @@
 ACTIVATE = .venv/bin/activate
-REQS = pip install -Ur requirements.txt
-TESTREQS = pip install -Ur test-requirements.txt
-INSTALL = pip install -e '.'
 
-venv: requirements.txt
+venv: $(ACTIVATE)
+
+$(ACTIVATE): requirements.txt
 	test -d .venv || virtualenv -p python2 .venv
-	. $(ACTIVATE); $(REQS)
-	. $(ACTIVATE); $(TESTREQS)
-	#. $(ACTIVATE); $(INSTALL)
+	.venv/bin/pip install -Ur requirements.txt
+	.venv/bin/pip install -Ur test-requirements.txt
 	touch $(ACTIVATE)
 
 lint: venv
@@ -19,8 +17,7 @@ autopep8: venv
 clean:
 	rm -rf .venv
 
-run-tests:
-
+run-tests: venv
 	@echo "Running ensime-vim lettuce tests"
 	. $(ACTIVATE); lettuce ensime_shared/spec/features
 
