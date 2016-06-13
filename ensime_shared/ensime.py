@@ -137,8 +137,8 @@ class EnsimeClient(DebuggerClient, object):
         self.launcher = launcher
         self.ensime_server = None
 
-        self.buffering_typechecks = False
-        self.buffered_payload = {}
+        self.currently_buffering_typechecks = False
+        self.buffered_notes = {}
         self.call_id = 0
         self.call_options = {}
         self.refactor_id = 1
@@ -430,7 +430,7 @@ class EnsimeClient(DebuggerClient, object):
         self.handlers["IndexerReadyEvent"] = f_indexer
         f_indexer = lambda ci, p: self.message("analyzer_ready")
         self.handlers["AnalyzerReadyEvent"] = f_indexer
-        self.handlers["NewScalaNotesEvent"] = self.__delegate_scala_notes
+        self.handlers["NewScalaNotesEvent"] = self.__buffer_typechecks
         self.handlers["BasicTypeInfo"] = self.show_type
         self.handlers["ArrowTypeInfo"] = self.show_ftype
         self.handlers["FullTypeCheckCompleteEvent"] = self.handle_typecheck_complete
@@ -446,23 +446,25 @@ class EnsimeClient(DebuggerClient, object):
         self.handlers["ImportSuggestions"] = self.handle_import_suggestions
         self.handlers["PackageInfo"] = self.handle_package_info
 
-    def __delegate_scala_notes(self, call_id, payload):
-        if self.buffering_typechecks:
+    def __buffer_typechecks(self, call_id, payload):
+        """Adds typecheck events to the buffer"""
+        if self.currently_buffering_typechecks:
             for note in payload['notes']:
-                self.buffered_payload['notes'].append(note)
-        elif self.vim_eval('syntastic_available'):
-            self.handle_new_scala_notes_event_with_syntastic(call_id, payload)
-        else:
-            self.handle_new_scala_notes_event
+                self.buffered_notes['notes'].append(note)
 
     def handle_debug_vm_error(self, call_id, payload):
         self.vim.command(commands['display_message'].format("Error. Check ensime-vim log for details."))
 
     def handle_typecheck_complete(self, call_id, payload):
-        if self.buffering_typechecks:
-            self.handle_new_scala_notes_event_with_syntastic(None, self.buffered_payload)
-            self.buffering_typechecks = False
-            self.buffered_payload = {}
+        """Passes the buffer to relevant display function & clears the flag+buffer"""
+        if self.currently_buffering_typechecks:
+            if self.vim_eval('syntastic_available'):
+                self.handle_new_scala_notes_event_with_syntastic(None, self.buffered_notes)
+            else:
+                self.handle_new_scala_notes_event(None, self.buffered_notes)
+
+            self.currently_buffering_typechecks = False
+            self.buffered_notes = {}
 
     def handle_import_suggestions(self, call_id, payload):
         imports = list(sorted(set(suggestion['name'].replace('$', '.') for suggestions in payload['symLists'] for suggestion in suggestions)))
@@ -753,7 +755,14 @@ class EnsimeClient(DebuggerClient, object):
         self.toggle_teardown = not self.toggle_teardown
 
     def type_check_cmd(self, args, range=None):
+        """Sets the flag to begin buffering typecheck notes & clears any
+        stale notes before requesting a typecheck from the server"""
         self.log("type_check_cmd: in")
+        self.currently_buffering_typechecks = True
+        if self.currently_buffering_typechecks:
+            self.buffered_notes = {
+                'notes': []
+            }
         self.type_check("")
 
     def en_classpath(self, args, range=None):
@@ -801,13 +810,6 @@ class EnsimeClient(DebuggerClient, object):
             "typehint": "InspectPackageByPathReq",
             "path": pkg
         })
-
-    def buffer_typecheck(self, args, range=None):
-        self.buffering_typechecks = True
-        self.buffered_payload = {
-            'notes': []
-        }
-        self.type_check("")
 
     def open_declaration(self, args, range=None):
         self.log("open_declaration: in")
@@ -1228,10 +1230,6 @@ class Ensime(object):
     @execute_with_client()
     def com_en_type_check(self, client, args, range=None):
         client.type_check_cmd(None)
-
-    @execute_with_client()
-    def com_en_buf_type_check(self, client, args, range=None):
-        client.buffer_typecheck(None)
 
     @execute_with_client()
     def com_en_type(self, client, args, range=None):

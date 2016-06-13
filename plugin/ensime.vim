@@ -12,7 +12,6 @@ augroup END
 
 command! -nargs=* -range EnNoTeardown call ensime#com_en_no_teardown([<f-args>], '')
 command! -nargs=* -range EnTypeCheck call ensime#com_en_type_check([<f-args>], '')
-command! -nargs=* -range EnBufferedTypeCheck call ensime#com_en_buf_type_check([<f-args>], '')
 command! -nargs=* -range EnType call ensime#com_en_type([<f-args>], '')
 command! -nargs=* -range EnSearch call ensime#com_en_sym_search([<f-args>], '')
 command! -nargs=* -range EnFormatSource call ensime#com_en_format_source([<f-args>], '')
