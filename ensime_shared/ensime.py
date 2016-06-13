@@ -9,6 +9,7 @@ from ensime_shared.util import catch, module_exists, Util
 from ensime_shared.launcher import EnsimeLauncher
 from ensime_shared.debugger import DebuggerClient
 from ensime_shared.config import gconfig, feedback
+from ensime_shared.symbol_format import completion_to_suggest, concat_params, concat_tparams
 
 from threading import Thread
 from subprocess import Popen, PIPE
@@ -656,7 +657,7 @@ class EnsimeClient(DebuggerClient, object):
         """Handler for a completion response."""
         completions = payload["completions"]
         self.log("handle_completion_info_list: in")
-        self.suggestions = [self.completion_to_suggest(c) for c in completions]
+        self.suggestions = [completion_to_suggest(c) for c in completions]
         self.log("handle_completion_info_list: {}".format(self.suggestions))
 
     def handle_type_inspect(self, call_id, payload):
@@ -666,6 +667,7 @@ class EnsimeClient(DebuggerClient, object):
         prefix = "( " + ", ".join(ts) + " ) => "
         self.raw_message(prefix + payload["type"]["fullName"])
 
+    # TODO @ktonga reuse completion suggestion formatting logic
     def show_type(self, call_id, payload):
         """Show type of a variable or scala type."""
         tpe = payload["fullName"]
@@ -674,13 +676,14 @@ class EnsimeClient(DebuggerClient, object):
         if args:
             if len(args) > 1:
                 tpes = [x["name"] for x in args]
-                tpe += self.concat_tparams(tpes)
+                tpe += concat_tparams(tpes)
             else:  # is 1
                 tpe += "[{}]".format(args[0]["fullName"])
 
         self.log(feedback["displayed_type"].format(tpe))
         self.raw_message(tpe)
 
+    # TODO @ktonga reuse completion suggestion formatting logic
     def show_ftype(self, call_id, payload):
         """Show the type of a function."""
         self.log("entering")
@@ -694,7 +697,7 @@ class EnsimeClient(DebuggerClient, object):
                 tpe += "("
                 f = lambda x: (x[0], x[1][tname])
                 params = list(map(f, l["params"]))
-                tpe += self.concat_params(params)
+                tpe += concat_params(params)
                 tpe += ")"
             tpe += " => {}".format(rtype["fullName"])
 
@@ -944,65 +947,6 @@ class EnsimeClient(DebuggerClient, object):
             cmd = commands["edit_file"].format(self.path())
             self.vim.command(cmd)
             self.vim_command("doautocmd_bufreadenter")
-
-    def concat_params(self, params):
-        """Return list of params from list of (pname, ptype)."""
-        name_and_types = [": ".join(p) for p in params]
-        return ", ".join(name_and_types)
-
-    def concat_tparams(self, tparams):
-        """Return a valid signature from a list of type parameters."""
-        types = [", ".join(p) for p in tparams]
-        return "[{}]".format(types)
-
-    def formatted_param_type(self, ptype):
-        """Return the short name for a type. Special treatment for by-name and var args"""
-        pt_name = ptype["name"]
-        if pt_name.startswith("<byname>"):
-            pt_name = pt_name.replace("<byname>[", "=> ")[:-1]
-        elif pt_name.startswith("<repeated>"):
-            pt_name = pt_name.replace("<repeated>[", "")[:-1] + "*"
-        return pt_name
-
-    def formatted_param_section(self, section):
-        """Format a parameters list. Supports the implicit list"""
-        implicit = "implicit " if section["isImplicit"] else ""
-        s_params = [[p[0], self.formatted_param_type(p[1])] for p in section["params"]]
-        return "({}{})".format(implicit, self.concat_params(s_params))
-
-    def formatted_completion_type(self, completion):
-        """Use result type for methods. Return just the member type otherwise"""
-        t_info = completion["typeInfo"]
-        return t_info["name"] if not completion["isCallable"] else t_info["resultType"]["name"]
-
-    def formatted_completion_sig(self, completion):
-        """Regenerate signature for methods. Return just the name otherwise"""
-        f_result = completion["name"]
-        if not completion["isCallable"]:
-            # It's a raw type
-            return f_result
-        elif len(completion["typeInfo"]["paramSections"]) == 0:
-            return f_result
-
-        # It's a function type
-        sections = completion["typeInfo"]["paramSections"]
-        f_sections = [self.formatted_param_section(ps) for ps in sections]
-        return u"{}{}".format(f_result, "".join(f_sections))
-
-    def completion_to_suggest(self, completion):
-        """Convert from a completion to a suggestion."""
-        res = {
-            # We use just the method name as completion
-            "word": completion["name"],
-            # We show the whole method signature in the popup
-            "abbr": self.formatted_completion_sig(completion),
-            # We show method result/field type in a sepatate column
-            "menu": self.formatted_completion_type(completion),
-            # We allow duplicates, needed to show overloaded methods
-            "dup": 1
-        }
-        self.log("completion_to_suggest: {}".format(res))
-        return res
 
     def send_request(self, request):
         """Send a request to the server."""
