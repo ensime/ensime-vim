@@ -3,3 +3,4 @@ flake8==2.5.2
 coveralls==1.1
 autopep8==1.2.1
 lettuce==0.2.21
+python-Levenshtein~=0.12

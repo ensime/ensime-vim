@@ -2,7 +2,6 @@ build:
   image: ensime/ensime:latest
   pull: true
   commands:
-    - pip install virtualenv
-    - pip install python-coveralls
-    - make run-tests
+    - pip install virtualenv python-coveralls
+    - make test
 

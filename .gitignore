@@ -2,7 +2,7 @@
 *.pyc
 .coverage
 /.cache
-/.venv
+/.venv*
 htmlcov
 .ropeproject*
 __pycache__
