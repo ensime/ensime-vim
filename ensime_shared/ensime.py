@@ -8,8 +8,10 @@ from ensime_shared.error import Error
 from ensime_shared.util import catch, module_exists, Util
 from ensime_shared.launcher import EnsimeLauncher
 from ensime_shared.debugger import DebuggerClient
+from ensime_shared.typecheck import TypecheckHandler
 from ensime_shared.config import gconfig, feedback
 from ensime_shared.symbol_format import completion_to_suggest, concat_params, concat_tparams
+from ensime_shared.vim_commands import commands
 
 from threading import Thread
 from subprocess import Popen, PIPE
@@ -24,52 +26,7 @@ if sys.version_info > (3, 0):
 else:
     from Queue import Queue
 
-commands = {
-    "enerror_matcher": "matchadd('EnErrorStyle', '\\%{}l\\%>{}c\\%<{}c')",
-    "highlight_enerror": "highlight EnErrorStyle ctermbg=red gui=underline",
-    "exists_enerrorstyle": "exists('g:EnErrorStyle')",
-    "set_enerrorstyle": "let g:EnErrorStyle='EnError'",
-    # http://vim.wikia.com/wiki/Timer_to_execute_commands_periodically
-    # Set to low values to improve responsiveness
-    "set_updatetime": "set updatetime=1000",
-    "current_file": "expand('%:p')",
-    "until_last_char_word": "normal e",
-    "until_first_char_word": "normal b",
-    # Avoid to trigger requests to server when writing
-    "write_file": "noautocmd w",
-    "input_save": "call inputsave()",
-    "input_restore": "call inputrestore()",
-    "set_input": "let user_input = input('{}')",
-    "get_input": "user_input",
-    "edit_file": "edit {}",
-    "reload_file": "checktime",
-    "display_message": "echo \"{}\"",
-    "split_window": "split {}",
-    "vert_split_window": "vsplit {}",
-    "new_vertical_window": "{}vnew {}",
-    "new_vertical_scratch": "{}vnew {} | setlocal nobuflisted buftype=nofile bufhidden=wipe noswapfile",
-    "doautocmd_bufleave": "doautocmd BufLeave",
-    "doautocmd_bufreadenter": "doautocmd BufReadPre,BufRead,BufEnter",
-    "filetype": "&filetype",
-    "set_filetype": "set filetype={}",
-    "go_to_char": "goto {}",
-    "set_ensime_completion": "set omnifunc=EnCompleteFunc",
-    "set_quickfix_list": "call setqflist({}, '')",
-    "open_quickfix": "copen",
-    "disable_plugin": "set runtimepath-={}",
-    "runtimepath": "&runtimepath",
-    "syntastic_available": 'exists("g:SyntasticRegistry")',
-    "syntastic_enable": "if exists('g:SyntasticRegistry') | let &runtimepath .= ',' . {!r} | endif",
-    "syntastic_append_notes": 'if ! exists("b:ensime_scala_notes") | let b:ensime_scala_notes = [] | endif | let b:ensime_scala_notes += {}',
-    "syntastic_reset_notes": 'let b:ensime_scala_notes = []',
-    "syntastic_show_notes": "silent! SyntasticCheck ensime",
-    "get_cursor_word": 'expand("<cword>")',
-    "select_item_list": 'inputlist({})',
-    "append_line": 'call append({}, {!r})'
-}
-
-
-class EnsimeClient(DebuggerClient, object):
+class EnsimeClient(TypecheckHandler, DebuggerClient, object):
     """Represents an Ensime client per ensime configuration path.
 
     Upon construction, this will either connect to an existing ensime server, or
@@ -99,6 +56,7 @@ class EnsimeClient(DebuggerClient, object):
             self.vim_command("set_ensime_completion")
             self.vim.command("autocmd FileType package_info nnoremap <buffer> <Space> :call EnPackageDecl()<CR>")
             self.vim.command("autocmd FileType package_info  setlocal splitright")
+            super(EnsimeClient, self).__init__()
 
         def setup_logger_and_paths():
             """Set up paths and logger."""
@@ -137,8 +95,6 @@ class EnsimeClient(DebuggerClient, object):
         self.launcher = launcher
         self.ensime_server = None
 
-        self.currently_buffering_typechecks = False
-        self.buffered_notes = {}
         self.call_id = 0
         self.call_options = {}
         self.refactor_id = 1
@@ -407,13 +363,14 @@ class EnsimeClient(DebuggerClient, object):
         self.vim_command("input_restore")
         return self.vim_eval("get_input")
 
-    def raw_message(self, m):
+    def raw_message(self, m, silent=False):
         """Display a message in the vim status line."""
         self.log("message: in")
         self.log(m)
         cmd = commands["display_message"]
         escaped = m.replace('"', '\\"')
-        self.vim.command(cmd.format(escaped))
+        c = "silent "+cmd if silent else cmd
+        self.vim.command(c.format(escaped))
 
     def message(self, key):
         """Display a message already defined in `feedback`."""
@@ -430,7 +387,7 @@ class EnsimeClient(DebuggerClient, object):
         self.handlers["IndexerReadyEvent"] = f_indexer
         f_indexer = lambda ci, p: self.message("analyzer_ready")
         self.handlers["AnalyzerReadyEvent"] = f_indexer
-        self.handlers["NewScalaNotesEvent"] = self.__buffer_typechecks
+        self.handlers["NewScalaNotesEvent"] = self.buffer_typechecks
         self.handlers["BasicTypeInfo"] = self.show_type
         self.handlers["ArrowTypeInfo"] = self.show_ftype
         self.handlers["FullTypeCheckCompleteEvent"] = self.handle_typecheck_complete
@@ -446,25 +403,8 @@ class EnsimeClient(DebuggerClient, object):
         self.handlers["ImportSuggestions"] = self.handle_import_suggestions
         self.handlers["PackageInfo"] = self.handle_package_info
 
-    def __buffer_typechecks(self, call_id, payload):
-        """Adds typecheck events to the buffer"""
-        if self.currently_buffering_typechecks:
-            for note in payload['notes']:
-                self.buffered_notes['notes'].append(note)
-
     def handle_debug_vm_error(self, call_id, payload):
         self.vim.command(commands['display_message'].format("Error. Check ensime-vim log for details."))
-
-    def handle_typecheck_complete(self, call_id, payload):
-        """Passes the buffer to relevant display function & clears the flag+buffer"""
-        if self.currently_buffering_typechecks:
-            if self.vim_eval('syntastic_available'):
-                self.handle_new_scala_notes_event_with_syntastic(None, self.buffered_notes)
-            else:
-                self.handle_new_scala_notes_event(None, self.buffered_notes)
-
-            self.currently_buffering_typechecks = False
-            self.buffered_notes = {}
 
     def handle_import_suggestions(self, call_id, payload):
         imports = list(sorted(set(suggestion['name'].replace('$', '.') for suggestions in payload['symLists'] for suggestion in suggestions)))
@@ -595,46 +535,7 @@ class EnsimeClient(DebuggerClient, object):
                 del self.call_options[call_id]
 
 
-    def handle_new_scala_notes_event_with_syntastic(self, call_id, payload):
-        """Syntastic specific handler for response `NewScalaNotesEvent`."""
 
-        def is_note_correct(note):
-            return note['beg'] != -1 and note['end'] != -1
-
-        current_file = os.path.abspath(self.path())
-        loclist = list({
-                'bufnr': self.vim.current.buffer.number,
-                'lnum': note['line'],
-                'col': note['col'],
-                'text': note['msg'],
-                'len': note['end'] - note['beg'] + 1,
-                'type': note['severity']['typehint'][4:5],
-                'valid': 1
-            } for note in payload["notes"] \
-                    if current_file == os.path.abspath(note['file']) and \
-                    is_note_correct(note)
-        )
-
-        json_list = json.dumps(loclist)
-        if json_list:
-            self.vim.command(commands['syntastic_append_notes'].format(json_list))
-            self.vim_command('syntastic_show_notes')
-
-    def handle_new_scala_notes_event(self, call_id, payload):
-        """Handler for response `NewScalaNotesEvent`."""
-        current_file = os.path.abspath(self.path())
-        for note in payload["notes"]:
-            l = note["line"]
-            c = note["col"] - 1
-            e = note["col"] + (note["end"] - note["beg"] + 1)
-
-            if current_file == os.path.abspath(note["file"]):
-                self.errors.append(Error(note["file"], note["msg"], l, c, e))
-                matcher = commands["enerror_matcher"].format(l, c, e)
-                match = self.vim.eval(matcher)
-                add_match_msg = "adding match {} at line {} column {} error {}"
-                self.log(add_match_msg.format(match, l, c, e))
-                self.matches.append(match)
 
     def handle_string_response(self, call_id, payload):
         """Handler for response `StringResponse`.
@@ -758,12 +659,9 @@ class EnsimeClient(DebuggerClient, object):
         """Sets the flag to begin buffering typecheck notes & clears any
         stale notes before requesting a typecheck from the server"""
         self.log("type_check_cmd: in")
-        self.currently_buffering_typechecks = True
-        if self.currently_buffering_typechecks:
-            self.buffered_notes = {
-                'notes': []
-            }
+        self.start_typechecking()
         self.type_check("")
+        self.vim.command('silent !echo "Typechecking..."')
 
     def en_classpath(self, args, range=None):
         self.log("en_classpath: in")

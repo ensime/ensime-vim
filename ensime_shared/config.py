@@ -8,6 +8,7 @@ feedback = {
     "unknown_symbol": "Symbol not found",
     "indexer_ready": "Ensime indexer is ready",
     "analyzer_ready": "Ensime analyzer is ready",
+    "typechecking": "Typechcking...",
     "module_missing": "{} missing: do a `pip install {}` and restart vim",
     "warn_classpath": "Execute :EnClasspath to set a classpath",
     "missing_debug_class": "You must specify a class to debug",
