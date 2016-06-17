@@ -1269,7 +1269,7 @@ class Ensime(object):
     @execute_with_client()
     def com_en_debug_start(self, client, args, range=None):
         client.debug_start(args, range)
-    
+
     @execute_with_client(create_classpath=True)
     def com_en_classpath(self, client, args, range=None):
         client.en_classpath(args, range)
@@ -1277,22 +1277,6 @@ class Ensime(object):
     @execute_with_client()
     def com_en_debug_continue(self, client, args, range=None):
         client.debug_continue(args, range)
-
-    @execute_with_client()
-    def com_en_debug_step(self, client, args, range=None):
-        client.debug_step(args, range)
-
-    @execute_with_client()
-    def com_en_debug_step_out(self, client, args, range=None):
-        client.debug_step_out(args, range)
-
-    @execute_with_client()
-    def com_en_debug_next(self, client, args, range=None):
-        client.debug_next(args, range)
-
-    @execute_with_client()
-    def com_en_debug_locate_name(self, client, args, range=None):
-        client.debug_locate_name(args, range)
 
     @execute_with_client()
     def com_en_backtrace(self, client, args, range=None):
