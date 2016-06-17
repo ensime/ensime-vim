@@ -633,7 +633,12 @@ class EnsimeClient(DebuggerClient, object):
         if not self.en_format_source_id:
             self.log("handle_string_response: received doc path")
             port = self.ensime.http_port()
-            url = gconfig["localhost"].format(port, payload["text"])
+            
+            url = payload["text"]
+            
+            if not url.startswith("http"): 
+                url = gconfig["localhost"].format(port, payload["text"])
+            
             browse_enabled = self.call_options[call_id].get("browse")
 
             if browse_enabled:
