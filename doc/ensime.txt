@@ -2,6 +2,7 @@
 
 Author:  Olivier 'yazgoo' Abdesselam
          Jorge Vicente Cantero (jvican)
+         Chris Coffey (ChrisCoffey)
 License: Same terms as Vim itself (see |license|)
 
 This plugin is only available if 'compatible' is not set.
