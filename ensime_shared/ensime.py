@@ -684,6 +684,11 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
         self.log("toggle_fulltype: in")
         self.enable_fulltype = not self.enable_fulltype
 
+        if self.enable_fulltype:
+            self.message("fulltype_display_on")
+        else:
+            self.message("fulltype_display_off")
+
     def symbol_at_point_req(self, open_definition, display=False):
         opts = self.call_options.get(self.call_id)
         if opts:

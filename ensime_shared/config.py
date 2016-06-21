@@ -4,21 +4,24 @@ gconfig = {
 }
 
 feedback = {
-    "start_message": "Ensime server has been started...",
-    "unknown_symbol": "Symbol not found",
-    "indexer_ready": "Ensime indexer is ready",
     "analyzer_ready": "Ensime analyzer is ready",
-    "typechecking": "Typechcking...",
-    "module_missing": "{} missing: do a `pip install {}` and restart vim",
-    "warn_classpath": "Execute :EnClasspath to set a classpath",
-    "missing_debug_class": "You must specify a class to debug",
-    "notify_break": "Execution breaked at {} {}",
     "displayed_type": "The type {} has been displayed",
     "failed_refactoring":
         "The refactoring could not be applied (more info at logs)",
-    "unhandled_response": "Response {} has not been handled",
+    "fulltype_display_on": "[ensime] Qualified type display enabled",
+    "fulltype_display_off": "[ensime] Qualified type display disabled",
+    "indexer_ready": "Ensime indexer is ready",
+    "manual_doc": "Go to {}",
+    "missing_debug_class": "You must specify a class to debug",
+    "module_missing": "{} missing: do a `pip install {}` and restart vim",
+    "notify_break": "Execution breaked at {} {}",
     "spawned_browser": "Opened tab {}",
-    "manual_doc": "Go to {}"}
+    "start_message": "Ensime server has been started...",
+    "typechecking": "Typechecking...",
+    "unhandled_response": "Response {} has not been handled",
+    "unknown_symbol": "Symbol not found",
+    "warn_classpath": "Execute :EnClasspath to set a classpath",
+}
 
 commands = {
     "enerror_matcher": "matchadd('EnErrorStyle', '\\%{}l\\%>{}c\\%<{}c')",
