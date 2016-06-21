@@ -8,8 +8,8 @@ feedback = {
     "displayed_type": "The type {} has been displayed",
     "failed_refactoring":
         "The refactoring could not be applied (more info at logs)",
-    "fulltype_display_on": "[ensime] Qualified type display enabled",
-    "fulltype_display_off": "[ensime] Qualified type display disabled",
+    "full_types_enabled_on": "[ensime] Qualified type display enabled",
+    "full_types_enabled_off": "[ensime] Qualified type display disabled",
     "indexer_ready": "Ensime indexer is ready",
     "manual_doc": "Go to {}",
     "missing_debug_class": "You must specify a class to debug",

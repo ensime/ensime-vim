@@ -108,7 +108,10 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
         self.completion_timeout = 10  # seconds
         self.completion_started = False
         self.en_format_source_id = None
-        self.enable_fulltype = False
+
+        self.full_types_enabled = False
+        """Whether fully-qualified types are displayed by inspections or not"""
+
         self.toggle_teardown = True
         self.connection_attempts = 0
         self.tmp_diff_folder = "/tmp/ensime-vim/diffs/"
@@ -614,7 +617,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
         rtype = payload["resultType"]
         lparams = payload["paramSections"]
         tpe = ""
-        tname = "fullName" if self.enable_fulltype else "name"
+        tname = "fullName" if self.full_types_enabled else "name"
 
         if rtype and lparams:
             for l in lparams:
@@ -682,12 +685,12 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
 
     def toggle_fulltype(self, args, range=None):
         self.log("toggle_fulltype: in")
-        self.enable_fulltype = not self.enable_fulltype
+        self.full_types_enabled = not self.full_types_enabled
 
-        if self.enable_fulltype:
-            self.message("fulltype_display_on")
+        if self.full_types_enabled:
+            self.message("full_types_enabled_on")
         else:
-            self.message("fulltype_display_off")
+            self.message("full_types_enabled_off")
 
     def symbol_at_point_req(self, open_definition, display=False):
         opts = self.call_options.get(self.call_id)
