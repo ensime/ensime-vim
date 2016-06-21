@@ -13,22 +13,6 @@ Feature: Format a Completion Suggestion
     | <byname>[ByNameType]   | => ByNameType |
     | <repeated>[VarargType] | VarargType*   |
 
-  Scenario: Format single type parameter
-    Given A list of type parameters:
-      | tparam |
-      | A      |
-    When We concat the type parameters
-    Then We get the format [A]
-
-  Scenario: Format multiple type parameters
-    Given A list of type parameters:
-      | tparam |
-      | A      |
-      | B      |
-      | C      |
-    When We concat the type parameters
-    Then We get the format [A, B, C]
-
   Scenario: Format empty parameters
     Given A list of parameters:
       | pname   | ptype |
@@ -114,7 +98,7 @@ Feature: Format a Completion Suggestion
     When We format the signature
     Then We get the format theCallable(a: A)(implicit b: B)
 
-  Scenario: Convert commpletions to suggestions
+  Scenario: Convert completions to suggestions
     Given We have the following completions:
       | name              | is_callable | ctype        | crtype        | pname | ptype | implicit |
       | nonCallable       | False       | SomeType     |               |       |       |          |

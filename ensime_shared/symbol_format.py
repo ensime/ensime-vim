@@ -44,11 +44,6 @@ def concat_params(params):
     name_and_types = [": ".join(p) for p in params]
     return ", ".join(name_and_types)
 
-def concat_tparams(tparams):
-    """Return a valid signature from a list of type parameters."""
-    types = ", ".join(tparams)
-    return "[{}]".format(types)
-
 def formatted_param_type(ptype):
     """Return the short name for a type. Special treatment for by-name and var args"""
     pt_name = ptype["name"]

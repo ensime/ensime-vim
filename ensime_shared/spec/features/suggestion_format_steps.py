@@ -20,10 +20,6 @@ def get_formatted(step, expected_format):
 def given_a_list_of_type_parameters(step):
     world.tparams = [tp['tparam'] for tp in step.hashes]
 
-@step('We concat the type parameters')
-def concat_type_parameters(step):
-    world.formatted = concat_tparams(world.tparams)
-
 @step('A list of parameters:')
 def given_a_list_of_parameters(step):
     world.params = [(p['pname'], p['ptype']) for p in step.hashes]

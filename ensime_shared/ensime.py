@@ -10,7 +10,7 @@ from ensime_shared.launcher import EnsimeLauncher
 from ensime_shared.debugger import DebuggerClient
 from ensime_shared.typecheck import TypecheckHandler
 from ensime_shared.config import gconfig, feedback, commands
-from ensime_shared.symbol_format import completion_to_suggest, concat_params, concat_tparams
+from ensime_shared.symbol_format import completion_to_suggest
 
 from threading import Thread
 from subprocess import Popen, PIPE
@@ -391,7 +391,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
         self.handlers["AnalyzerReadyEvent"] = f_indexer
         self.handlers["NewScalaNotesEvent"] = self.buffer_typechecks
         self.handlers["BasicTypeInfo"] = self.show_type
-        self.handlers["ArrowTypeInfo"] = self.show_ftype
+        self.handlers["ArrowTypeInfo"] = self.show_type
         self.handlers["FullTypeCheckCompleteEvent"] = self.handle_typecheck_complete
         self.handlers["StringResponse"] = self.handle_string_response
         self.handlers["CompletionInfoList"] = self.handle_completion_info_list
@@ -597,36 +597,10 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
     # TODO @ktonga reuse completion suggestion formatting logic
     def show_type(self, call_id, payload):
         """Show type of a variable or scala type."""
-        tpe = payload["fullName"]
-        args = payload["typeArgs"]
-
-        if args:
-            if len(args) > 1:
-                tpes = [x["name"] for x in args]
-                tpe += concat_tparams(tpes)
-            else:  # is 1
-                tpe += "[{}]".format(args[0]["fullName"])
-
-        self.log(feedback["displayed_type"].format(tpe))
-        self.raw_message(tpe)
-
-    # TODO @ktonga reuse completion suggestion formatting logic
-    def show_ftype(self, call_id, payload):
-        """Show the type of a function."""
-        self.log("entering")
-        rtype = payload["resultType"]
-        lparams = payload["paramSections"]
-        tpe = ""
-        tname = "fullName" if self.full_types_enabled else "name"
-
-        if rtype and lparams:
-            for l in lparams:
-                tpe += "("
-                f = lambda x: (x[0], x[1][tname])
-                params = list(map(f, l["params"]))
-                tpe += concat_params(params)
-                tpe += ")"
-            tpe += " => {}".format(rtype["fullName"])
+        if self.full_types_enabled:
+            tpe = payload['fullName']
+        else:
+            tpe = payload['name']
 
         self.log(feedback["displayed_type"].format(tpe))
         self.raw_message(tpe)
