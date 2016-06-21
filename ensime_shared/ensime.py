@@ -555,12 +555,12 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
         if not self.en_format_source_id:
             self.log("handle_string_response: received doc path")
             port = self.ensime.http_port()
-            
+
             url = payload["text"]
-            
-            if not url.startswith("http"): 
+
+            if not url.startswith("http"):
                 url = gconfig["localhost"].format(port, payload["text"])
-            
+
             browse_enabled = self.call_options[call_id].get("browse")
 
             if browse_enabled:
@@ -589,10 +589,11 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
 
     def handle_type_inspect(self, call_id, payload):
         """Handler for responses `TypeInspectInfo`."""
+        style = 'fullName' if self.full_types_enabled else 'name'
         interfaces = payload.get("interfaces")
-        ts = [i["type"]["name"] for i in interfaces]
+        ts = [i["type"][style] for i in interfaces]
         prefix = "( " + ", ".join(ts) + " ) => "
-        self.raw_message(prefix + payload["type"]["fullName"])
+        self.raw_message(prefix + payload["type"][style])
 
     # TODO @ktonga reuse completion suggestion formatting logic
     def show_type(self, call_id, payload):
@@ -713,7 +714,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
         self.symbol_at_point_req(False, True)
 
     def suggest_import(self, args, range=None):
-        self.log("inspect_type: in")
+        self.log("suggest_import: in")
         pos = self.get_position(self.cursor()[0], self.cursor()[1])
         word = self.vim_eval('get_cursor_word')
         req = {"point": pos,
