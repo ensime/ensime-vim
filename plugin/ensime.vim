@@ -1,6 +1,8 @@
-if has('nvim')
-  finish
+if has('nvim') | finish | endif
+if exists('g:loaded_ensime') || &cp
+    finish
 endif
+
 augroup ensime
     autocmd!
     autocmd VimLeave *.scala call ensime#au_vim_leave(expand("<afile>"))
@@ -38,9 +40,13 @@ command! -nargs=* -range EnOrganizeImports call ensime#com_en_organize_imports([
 command! -nargs=* -range EnAddImport call ensime#com_en_add_import([<f-args>], '')
 
 function! EnPackageDecl() abort
-  return ensime#fun_en_package_decl()
+    return ensime#fun_en_package_decl()
 endfunction
-  
+
 function! EnCompleteFunc(a, b) abort
     return ensime#fun_en_complete_func(a:a, a:b)
 endfunction
+
+let g:loaded_ensime = 1
+
+" vim:set et sw=4 ts=4 tw=78:

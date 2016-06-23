@@ -1,23 +1,32 @@
-ACTIVATE = .venv/bin/activate
+PYTHON := python2
+VENV := .venv
 
-venv: $(ACTIVATE)
+activate := $(VENV)/bin/activate
+requirements := requirements.txt test-requirements.txt
+deps := $(VENV)/deps-updated
 
-$(ACTIVATE): requirements.txt
-	test -d .venv || virtualenv -p python2 .venv
-	.venv/bin/pip install -Ur requirements.txt
-	.venv/bin/pip install -Ur test-requirements.txt
-	touch $(ACTIVATE)
+test: $(deps)
+	@echo "Running ensime-vim lettuce tests"
+	. $(activate) && lettuce ensime_shared/spec/features
 
-lint: venv
-	. $(ACTIVATE); flake8 --max-complexity=10 *.py **/*.py
+$(activate):
+	virtualenv -p $(PYTHON) $(VENV)
 
-autopep8: venv
-	. $(ACTIVATE); autopep8 -aaa --in-place *.py **/*.py
+$(deps): $(activate) $(requirements)
+	$(VENV)/bin/pip install --upgrade --requirement requirements.txt
+	$(VENV)/bin/pip install --upgrade --requirement test-requirements.txt
+	touch $(deps)
+
+lint: $(deps)
+	. $(activate) && flake8 --max-complexity=10 *.py **/*.py
+
+format: $(deps)
+	. $(activate) && autopep8 -aaa --in-place *.py **/*.py
 
 clean:
-	rm -rf .venv
+	@echo Cleaning build artifacts, including the virtualenv...
+	-rm -rf $(VENV)
+	-find . -name '*.pyc' -exec rm -f {} +
+	-find . -name '*.pyo' -exec rm -f {} +
 
-run-tests: venv
-	@echo "Running ensime-vim lettuce tests"
-	. $(ACTIVATE); lettuce ensime_shared/spec/features
-
+.PHONY: test lint format clean

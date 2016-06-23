@@ -1,11 +1,8 @@
+/doc/tags
 *.pyc
 .coverage
 /.cache
-/.venv
-.gitignore
+/.venv*
 htmlcov
-/.cache
-/.venv
-.gitignore
 .ropeproject*
 __pycache__

@@ -119,6 +119,14 @@ function! ensime#com_en_inline(args, range) abort
     return s:call_plugin('com_en_inline', [a:args, a:range])
 endfunction
 
+function! ensime#com_en_organize_imports(args, range) abort
+    return s:call_plugin('com_en_organize_imports', [a:args, a:range])
+endfunction
+
+function! ensime#com_en_add_import(args, range) abort
+    return s:call_plugin('com_en_add_import', [a:args, a:range])
+endfunction
+
 function! ensime#com_en_inspect_type(args, range) abort
     return s:call_plugin('com_en_inspect_type', [a:args, a:range])
 endfunction
@@ -184,3 +192,5 @@ PY
     unlet g:__result
     return res
 endfunction
+
+" vim:set et sw=4 ts=4 tw=78:
