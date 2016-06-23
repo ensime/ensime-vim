@@ -9,9 +9,8 @@ from ensime_shared.util import catch, module_exists, Util
 from ensime_shared.launcher import EnsimeLauncher
 from ensime_shared.debugger import DebuggerClient
 from ensime_shared.typecheck import TypecheckHandler
-from ensime_shared.config import gconfig, feedback
+from ensime_shared.config import gconfig, feedback, commands
 from ensime_shared.symbol_format import completion_to_suggest, concat_params, concat_tparams
-from ensime_shared.vim_commands import commands
 
 from threading import Thread
 from subprocess import Popen, PIPE

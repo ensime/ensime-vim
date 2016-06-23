@@ -1,7 +1,8 @@
 import os
 import json
 from ensime_shared.error import Error
-from ensime_shared.vim_commands import commands
+from ensime_shared.config import commands
+
 
 class TypecheckHandler(object):
     def __init__(self):
