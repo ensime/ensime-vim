@@ -242,6 +242,22 @@ Debugger Commands~
     debugging session is actually started (but they are not persisted across
     server restarts).
 
+                                                                 *:EnDebugStep*
+:EnDebugStep
+
+    Steps to the next statement during a debugging session.
+
+                                                                 *:EnDebugNext*
+:EnDebugNext
+
+    Steps over the next statemenet during a debugging session 
+
+                                                                 *:EnDebugStepOut*
+:EnDebugStepOut
+
+    Goes to the next line, one stack frame above the current execution
+    location.
+
                                                  *ensime-refactoring-commands*
 Refactoring Commands~
 
