@@ -1209,10 +1209,6 @@ class Ensime(object):
         client.debug_next(args, range)
 
     @execute_with_client()
-    def com_en_debug_locate_name(self, client, args, range=None):
-        client.debug_locate_name(args, range)
-
-    @execute_with_client()
     def com_en_backtrace(self, client, args, range=None):
         client.backtrace(args, range)
 

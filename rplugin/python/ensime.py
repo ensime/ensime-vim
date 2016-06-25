@@ -116,10 +116,6 @@ class NeovimEnsime(Ensime):
     def com_en_debug_next(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_debug_next(*args, **kwargs)
 
-    @neovim.command('EnDebugLocateName', **command_params)
-    def com_en_debug_locate_name(self, *args, **kwargs):
-        super(NeovimEnsime, self).com_en_debug_locate_name(*args, **kwargs)
-
     @neovim.command('EnClasspath', **command_params)
     def com_en_classpath(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_classpath(*args, **kwargs)

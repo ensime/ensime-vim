@@ -72,13 +72,6 @@ class DebuggerClient(object):
             "typehint":"DebugNextReq",
             "threadId":self.debug_thread_id})
 
-    def debug_locate_name(self, args, range=None):
-        self.log("debug_locate_name: in")
-        self.send_request({
-            "typehint":"DebugLocateNameReq",
-            "threadId":self.debug_thread_id,
-            "name":args[0]})
-
     def backtrace(self, args, range=None):
         self.log("backtrace: in")
         self.send_request({
