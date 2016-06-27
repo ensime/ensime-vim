@@ -63,7 +63,7 @@ class EnsimeLauncher(object):
     def __init__(self, vim, base_dir=_default_base_dir):
         self.vim = vim
         self.base_dir = os.path.abspath(base_dir)
-        self.ensime_version = "1.0.0-SNAPSHOT"
+        self.ensime_version = "1.0.0"
         self.sbt_version = "0.13.11"
 
     def launch(self, conf_path):
