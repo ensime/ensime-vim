@@ -1,4 +1,5 @@
 import os
+import errno
 import signal
 import socket
 import subprocess
@@ -8,6 +9,7 @@ import fnmatch
 
 import sexpdata
 
+from ensime_shared.errors import InvalidJavaPathError
 from ensime_shared.util import Util, catch
 
 
@@ -99,16 +101,21 @@ class EnsimeLauncher(object):
 
     def start_process(self, classpath):
         cache_dir = self.config['cache-dir']
-        java_home = self.config['java-home']
         java_flags = self.config['java-flags']
 
         Util.mkdir_p(cache_dir)
         log_path = os.path.join(cache_dir, "server.log")
         log = open(log_path, "w")
         null = open("/dev/null", "r")
+        java = os.path.join(self.config['java-home'], 'bin', 'java')
+
+        if not os.path.exists(java):
+            raise InvalidJavaPathError(errno.ENOENT, 'No such file or directory', java)
+        elif not os.access(java, os.X_OK):
+            raise InvalidJavaPathError(errno.EACCES, 'Permission denied', java)
+
         args = (
-            [os.path.join(java_home, "bin", "java")] +
-            ["-cp", classpath] +
+            [java, "-cp", classpath] +
             [a for a in java_flags if a != ""] +
             ["-Densime.config={}".format(self._config_path),
              "org.ensime.server.Server"])
@@ -124,6 +131,7 @@ class EnsimeLauncher(object):
             log.close()
             with catch(Exception, lambda e: None):
                 os.remove(pid_path)
+
         return EnsimeProcess(cache_dir, process, log_path, on_stop)
 
     def generate_classpath(self):

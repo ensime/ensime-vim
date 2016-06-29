@@ -1,6 +1,6 @@
 import os
 import json
-from ensime_shared.error import Error
+from ensime_shared.errors import Error
 from ensime_shared.config import commands
 
 

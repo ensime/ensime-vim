@@ -11,6 +11,7 @@ feedback = {
     "full_types_enabled_on": "Qualified type display enabled",
     "full_types_enabled_off": "Qualified type display disabled",
     "indexer_ready": "Indexer is ready",
+    "invalid_java": "Java not found or not executable, verify :java-home in your .ensime config",
     "manual_doc": "Go to {}",
     "missing_debug_class": "You must specify a class to debug",
     "module_missing": "{} missing: do a `pip install {}` and restart vim",

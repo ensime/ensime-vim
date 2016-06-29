@@ -4,7 +4,7 @@ import inspect
 import webbrowser
 
 # Ensime shared imports
-from ensime_shared.error import Error
+from ensime_shared.errors import InvalidJavaPathError
 from ensime_shared.util import catch, module_exists, Util
 from ensime_shared.launcher import EnsimeLauncher
 from ensime_shared.debugger import DebuggerClient
@@ -141,7 +141,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
         if not module_exists("sexpdata"):
             self.tell_module_missing("sexpdata")
 
-
     def log(self, what):
         """Log `what` in a file at the .ensime_cache folder or /tmp."""
         with open(self.log_file, "a") as f:
@@ -205,7 +204,12 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
                     if not quiet:
                         self.message("warn_classpath")
                     return False
-                self.ensime = self.launcher.launch()
+
+                try:
+                    self.ensime = self.launcher.launch()
+                except InvalidJavaPathError:
+                    self.message('invalid_java')  # TODO: also disable plugin
+
             return bool(self.ensime)
 
         def ready_to_connect():

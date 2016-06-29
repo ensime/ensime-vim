@@ -1,9 +1,18 @@
 import os
 
 
-class Error:
-    """Represents an Error in the ensime-vim plugin."""
+class InvalidJavaPathError(OSError):
+    """Raised when ensime-vim cannot find a valid Java executable."""
 
+    def __init__(self, errno, msg, filename, *args):
+        super(InvalidJavaPathError, self).__init__(errno, msg, filename, *args)
+
+
+class Error(object):
+    """Represents an error in source code reported by ENSIME."""
+
+    # l, c, e are line, (beginning) column and end (column)
+    # TODO: docstring and rename these bad, lint-failing params :-P
     def __init__(self, path, message, l, c, e):
         self.path = os.path.abspath(path)
         self.message = message
