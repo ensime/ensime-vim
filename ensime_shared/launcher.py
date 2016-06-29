@@ -59,14 +59,14 @@ if os.path.isdir(_old_base_dir):
 
 
 class EnsimeLauncher(object):
+    ENSIME_VERSION = '1.0.0'
+    SBT_VERSION = '0.13.11'
 
     def __init__(self, vim, config_path, base_dir=_default_base_dir):
         self.vim = vim
         self._config_path = os.path.abspath(config_path)
         self.config = self.parse_config(self._config_path)
         self.base_dir = os.path.abspath(base_dir)
-        self.ensime_version = "1.0.0"
-        self.sbt_version = "0.13.11"
         self.classpath_file = os.path.join(self.base_dir,
                                            self.config['scala-version'],
                                            'classpath')
@@ -135,7 +135,7 @@ class EnsimeLauncher(object):
             self.build_sbt())
         Util.write_file(
             os.path.join(project_dir, "project", "build.properties"),
-            "sbt.version={}".format(self.sbt_version))
+            "sbt.version={}".format(self.SBT_VERSION))
         Util.write_file(
             os.path.join(project_dir, "project", "plugins.sbt"),
             """addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0-M11")""")
@@ -216,7 +216,7 @@ saveClasspathTask := {
 }"""
         replace = {
             "scala_version": self.config['scala-version'],
-            "version": self.ensime_version,
+            "version": self.ENSIME_VERSION,
             "classpath_file": self.classpath_file,
         }
         for k in replace.keys():
