@@ -67,6 +67,9 @@ class EnsimeLauncher(object):
         self.base_dir = os.path.abspath(base_dir)
         self.ensime_version = "1.0.0"
         self.sbt_version = "0.13.11"
+        self.classpath_file = os.path.join(self.base_dir,
+                                           self.config['scala-version'],
+                                           'classpath')
 
     def launch(self):
         cache_dir = self.config['cache-dir'],
@@ -77,31 +80,19 @@ class EnsimeLauncher(object):
         classpath = self.load_classpath()
         return self.start_process(classpath) if classpath else None
 
-    def classpath_project_dir(self, scala_version):
-        return os.path.join(self.base_dir, scala_version)
-
-    def no_classpath_file(self):
-        conf = self.config
-        project_dir = self.classpath_project_dir(conf['scala-version'])
-        classpath_file = os.path.join(project_dir, "classpath")
-        return not os.path.exists(classpath_file)
-
     def load_classpath(self):
-        scala_version = self.config['scala-version']
-        project_dir = self.classpath_project_dir(scala_version)
-
-        classpath_file = os.path.join(project_dir, "classpath")
-        if not os.path.exists(classpath_file):
-            if not self.generate_classpath(scala_version, classpath_file):
+        if not os.path.exists(self.classpath_file):
+            if not self.generate_classpath():
                 return None
 
         classpath = "{}:{}/lib/tools.jar".format(
-            Util.read_file(classpath_file), self.config['java-home'])
+            Util.read_file(self.classpath_file), self.config['java-home'])
 
         # Allow override with a local development server jar, see:
         # http://ensime.github.io/contributing/#manual-qa-testing
+        scala_minor = self.config['scala-version'][:4]
         for x in os.listdir(self.base_dir):
-            if fnmatch.fnmatch(x, "ensime_" + scala_version[:4] + "*-assembly.jar"):
+            if fnmatch.fnmatch(x, "ensime_" + scala_minor + "*-assembly.jar"):
                 classpath = os.path.join(self.base_dir, x) + ":" + classpath
 
         return classpath
@@ -135,13 +126,13 @@ class EnsimeLauncher(object):
                 os.remove(pid_path)
         return EnsimeProcess(cache_dir, process, log_path, on_stop)
 
-    def generate_classpath(self, scala_version, classpath_file):
-        project_dir = self.classpath_project_dir(scala_version)
+    def generate_classpath(self):
+        project_dir = os.path.dirname(self.classpath_file)
         Util.mkdir_p(project_dir)
         Util.mkdir_p(os.path.join(project_dir, "project"))
         Util.write_file(
             os.path.join(project_dir, "build.sbt"),
-            self.build_sbt(scala_version, classpath_file))
+            self.build_sbt())
         Util.write_file(
             os.path.join(project_dir, "project", "build.properties"),
             "sbt.version={}".format(self.sbt_version))
@@ -185,13 +176,13 @@ class EnsimeLauncher(object):
         else:
             self.vim.command("!({} && {})".format(cd_cmd, sbt_cmd))
 
-        success = self.reorder_classpath(classpath_file)
+        success = self.reorder_classpath(self.classpath_file)
         if not success:
             self.vim.command("echo 'Classpath ordering failed.'")
 
         return True
 
-    def build_sbt(self, scala_version, classpath_file):
+    def build_sbt(self):
         src = """
 import sbt._
 import IO._
@@ -224,9 +215,9 @@ saveClasspathTask := {
   write(out, (unmanaged ++ managed).mkString(File.pathSeparator))
 }"""
         replace = {
-            "scala_version": scala_version,
+            "scala_version": self.config['scala-version'],
             "version": self.ensime_version,
-            "classpath_file": classpath_file,
+            "classpath_file": self.classpath_file,
         }
         for k in replace.keys():
             src = src.replace("%(" + k + ")", replace[k])

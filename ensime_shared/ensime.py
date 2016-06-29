@@ -200,7 +200,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
                 self.log(str(inspect.stack()))
                 self.log("setup(quiet={}, create_classpath={}) called by {}()"
                          .format(quiet, create_classpath, called_by))
-                no_classpath = self.launcher.no_classpath_file()
+                no_classpath = not os.path.exists(self.launcher.classpath_file)
                 if not create_classpath and no_classpath:
                     if not quiet:
                         self.message("warn_classpath")
