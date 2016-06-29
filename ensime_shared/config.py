@@ -4,19 +4,19 @@ gconfig = {
 }
 
 feedback = {
-    "analyzer_ready": "Ensime analyzer is ready",
+    "analyzer_ready": "Analyzer is ready",
     "displayed_type": "The type {} has been displayed",
     "failed_refactoring":
         "The refactoring could not be applied (more info at logs)",
-    "full_types_enabled_on": "[ensime] Qualified type display enabled",
-    "full_types_enabled_off": "[ensime] Qualified type display disabled",
-    "indexer_ready": "Ensime indexer is ready",
+    "full_types_enabled_on": "Qualified type display enabled",
+    "full_types_enabled_off": "Qualified type display disabled",
+    "indexer_ready": "Indexer is ready",
     "manual_doc": "Go to {}",
     "missing_debug_class": "You must specify a class to debug",
     "module_missing": "{} missing: do a `pip install {}` and restart vim",
     "notify_break": "Execution breaked at {} {}",
     "spawned_browser": "Opened tab {}",
-    "start_message": "Ensime server has been started...",
+    "start_message": "Server has been started...",
     "typechecking": "Typechecking...",
     "unhandled_response": "Response {} has not been handled",
     "unknown_symbol": "Symbol not found",

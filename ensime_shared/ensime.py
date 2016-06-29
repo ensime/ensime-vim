@@ -54,7 +54,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
             self.vim_command("set_updatetime")
             self.vim_command("set_ensime_completion")
             self.vim.command("autocmd FileType package_info nnoremap <buffer> <Space> :call EnPackageDecl()<CR>")
-            self.vim.command("autocmd FileType package_info  setlocal splitright")
+            self.vim.command("autocmd FileType package_info setlocal splitright")
             super(EnsimeClient, self).__init__()
 
         def setup_logger_and_paths():
@@ -67,7 +67,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
             if not osp.isdir(self.ensime_cache):
                 try:
                     os.mkdir(self.ensime_cache)
-                except OSError as exception:
+                except OSError:
                     self.log_dir = "/tmp/"
             self.log_file = os.path.join(self.log_dir, "ensime-vim.log")
             with open(self.log_file, "w") as f:
@@ -375,7 +375,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
 
     def message(self, key):
         """Display a message already defined in `feedback`."""
-        msg = feedback[key]
+        msg = '[ensime] ' + feedback[key]
         self.raw_message(msg)
 
     def register_responses_handlers(self):
@@ -568,7 +568,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
                 try:
                     if webbrowser.open(url):
                         self.log("opened {}".format(url))
-                except webbrowser.Error, e:
+                except webbrowser.Error as e:
                     log_msg = "handle_string_response: webbrowser error: {}"
                     self.log(log_msg.format(e))
                     self.raw_message(feedback["manual_doc"].format(url))
