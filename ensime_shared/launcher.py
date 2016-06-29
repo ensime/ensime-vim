@@ -60,53 +60,57 @@ if os.path.isdir(_old_base_dir):
 
 class EnsimeLauncher(object):
 
-    def __init__(self, vim, base_dir=_default_base_dir):
+    def __init__(self, vim, config_path, base_dir=_default_base_dir):
         self.vim = vim
+        self._config_path = os.path.abspath(config_path)
+        self.config = self.parse_config(self._config_path)
         self.base_dir = os.path.abspath(base_dir)
         self.ensime_version = "1.0.0"
         self.sbt_version = "0.13.11"
 
-    def launch(self, conf_path):
-        conf = self.parse_conf(conf_path)
-        process = EnsimeProcess(conf['cache-dir'], None, None, lambda: None)
+    def launch(self):
+        cache_dir = self.config['cache-dir'],
+        process = EnsimeProcess(cache_dir, None, None, lambda: None)
         if process.is_ready():
             return process
 
-        classpath = self.load_classpath(
-            conf['scala-version'], conf['java-home'])
-        return self.start_process(
-            conf_path=os.path.abspath(conf_path),
-            classpath=classpath,
-            cache_dir=conf['cache-dir'],
-            java_home=conf['java-home'],
-            java_flags=conf['java-flags']) if classpath else None
+        classpath = self.load_classpath()
+        return self.start_process(classpath) if classpath else None
 
     def classpath_project_dir(self, scala_version):
         return os.path.join(self.base_dir, scala_version)
 
-    def no_classpath_file(self, conf_path):
-        conf = self.parse_conf(conf_path)
+    def no_classpath_file(self):
+        conf = self.config
         project_dir = self.classpath_project_dir(conf['scala-version'])
         classpath_file = os.path.join(project_dir, "classpath")
         return not os.path.exists(classpath_file)
 
-    def load_classpath(self, scala_version, java_home):
+    def load_classpath(self):
+        scala_version = self.config['scala-version']
         project_dir = self.classpath_project_dir(scala_version)
+
         classpath_file = os.path.join(project_dir, "classpath")
         if not os.path.exists(classpath_file):
             if not self.generate_classpath(scala_version, classpath_file):
                 return None
-        classpath = "{}:{}/lib/tools.jar".format(
-            Util.read_file(classpath_file), java_home)
 
+        classpath = "{}:{}/lib/tools.jar".format(
+            Util.read_file(classpath_file), self.config['java-home'])
+
+        # Allow override with a local development server jar, see:
+        # http://ensime.github.io/contributing/#manual-qa-testing
         for x in os.listdir(self.base_dir):
             if fnmatch.fnmatch(x, "ensime_" + scala_version[:4] + "*-assembly.jar"):
                 classpath = os.path.join(self.base_dir, x) + ":" + classpath
 
         return classpath
 
-    def start_process(self, conf_path, classpath, cache_dir, java_home,
-                      java_flags):
+    def start_process(self, classpath):
+        cache_dir = self.config['cache-dir']
+        java_home = self.config['java-home']
+        java_flags = self.config['java-flags']
+
         Util.mkdir_p(cache_dir)
         log_path = os.path.join(cache_dir, "server.log")
         log = open(log_path, "w")
@@ -115,7 +119,7 @@ class EnsimeLauncher(object):
             [os.path.join(java_home, "bin", "java")] +
             ["-cp", classpath] +
             [a for a in java_flags if a != ""] +
-            ["-Densime.config={}".format(conf_path),
+            ["-Densime.config={}".format(self._config_path),
              "org.ensime.server.Server"])
         process = subprocess.Popen(
             args,
@@ -228,7 +232,10 @@ saveClasspathTask := {
             src = src.replace("%(" + k + ")", replace[k])
         return src
 
-    def parse_conf(self, path):
+    @staticmethod
+    def parse_config(path):
+        """Parse an .ensime project config file, from S-expressions to dict."""
+
         def paired(iterable):
             """s -> (s0, s1), (s2, s3), (s4, s5), ..."""
             cursor = iter(iterable)

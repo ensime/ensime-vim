@@ -11,7 +11,6 @@ Failure = "Failure"
 
 @step('The config (?P<conf_path>resources/\w+.conf)')
 def existing_config(step, conf_path):
-    world.launcher = EnsimeLauncher(TestVim())
     world.config_path = path.abspath(testDir + "/" + conf_path)
 
 
@@ -19,7 +18,7 @@ def existing_config(step, conf_path):
 def load_config(step):
     c = None
     try:
-        c = world.launcher.parse_conf(world.config_path)
+        c = EnsimeLauncher.parse_config(world.config_path)
     except:
         c = Failure
     world.conf = c

@@ -198,15 +198,14 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
             if not self.ensime:
                 called_by = inspect.stack()[4][3]
                 self.log(str(inspect.stack()))
-                self.log("setup({}, {}) called by {}()"
+                self.log("setup(quiet={}, create_classpath={}) called by {}()"
                          .format(quiet, create_classpath, called_by))
-                no_classpath = self.launcher.no_classpath_file(
-                    self.config_path)
+                no_classpath = self.launcher.no_classpath_file()
                 if not create_classpath and no_classpath:
                     if not quiet:
                         self.message("warn_classpath")
                     return False
-                self.ensime = self.launcher.launch(self.config_path)
+                self.ensime = self.launcher.launch()
             return bool(self.ensime)
 
         def ready_to_connect():
@@ -1028,7 +1027,6 @@ class Ensime(object):
         self.vim = vim
         # Map ensime configs to a ensime clients
         self.clients = {}
-        self.launcher = EnsimeLauncher(vim)
         self.init_integrations()
 
     def init_integrations(self):
@@ -1095,7 +1093,8 @@ class Ensime(object):
         if abs_path in self.clients:
             client = self.clients[abs_path]
         elif create_client:
-            client = EnsimeClient(self.vim, self.launcher, config_path)
+            launcher = EnsimeLauncher(self.vim, config_path)
+            client = EnsimeClient(self.vim, launcher, config_path)
             if client.setup(quiet=quiet, create_classpath=create_classpath):
                 self.clients[abs_path] = client
         return client
