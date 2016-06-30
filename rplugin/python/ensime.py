@@ -92,15 +92,15 @@ class NeovimEnsime(Ensime):
     def com_en_suggest_import(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_suggest_import(*args, **kwargs)
 
-    @neovim.command('EnSetBreak', **command_params)
-    def com_en_set_break(self, *args, **kwargs):
-        super(NeovimEnsime, self).com_en_set_break(*args, **kwargs)
+    @neovim.command('EnDebugSetBreak', **command_params)
+    def com_en_debug_set_break(self, *args, **kwargs):
+        super(NeovimEnsime, self).com_en_debug_set_break(*args, **kwargs)
 
-    @neovim.command('EnClearBreaks', **command_params)
-    def com_en_clear_breaks(self, *args, **kwargs):
-        super(NeovimEnsime, self).com_en_clear_breaks(*args, **kwargs)
+    @neovim.command('EnDebugClearBreaks', **command_params)
+    def com_en_debug_clear_breaks(self, *args, **kwargs):
+        super(NeovimEnsime, self).com_en_debug_clear_breaks(*args, **kwargs)
 
-    @neovim.command('EnDebug', **command_params)
+    @neovim.command('EnDebugStart', **command_params)
     def com_en_debug_start(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_debug_start(*args, **kwargs)
 
@@ -112,13 +112,13 @@ class NeovimEnsime(Ensime):
     def com_en_package_inspect(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_package_inspect(*args, **kwargs)
 
-    @neovim.command('EnContinue', **command_params)
+    @neovim.command('EnDebugContinue', **command_params)
     def com_en_debug_continue(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_debug_continue(*args, **kwargs)
 
-    @neovim.command('EnBacktrace', **command_params)
-    def com_en_backtrace(self, *args, **kwargs):
-        super(NeovimEnsime, self).com_en_backtrace(*args, **kwargs)
+    @neovim.command('EnDebugBacktrace', **command_params)
+    def com_en_debug_backtrace(self, *args, **kwargs):
+        super(NeovimEnsime, self).com_en_debug_backtrace(*args, **kwargs)
 
     @neovim.command('EnRename', **command_params)
     def com_en_rename(self, *args, **kwargs):

@@ -1182,12 +1182,12 @@ class Ensime(object):
         client.suggest_import(args, range)
 
     @execute_with_client()
-    def com_en_set_break(self, client, args, range=None):
-        client.set_break(args, range)
+    def com_en_debug_set_break(self, client, args, range=None):
+        client.debug_set_break(args, range)
 
     @execute_with_client()
-    def com_en_clear_breaks(self, client, args, range=None):
-        client.clear_breaks(args, range)
+    def com_en_debug_clear_breaks(self, client, args, range=None):
+        client.debug_clear_breaks(args, range)
 
     @execute_with_client()
     def com_en_debug_start(self, client, args, range=None):
@@ -1202,8 +1202,8 @@ class Ensime(object):
         client.debug_continue(args, range)
 
     @execute_with_client()
-    def com_en_backtrace(self, client, args, range=None):
-        client.backtrace(args, range)
+    def com_en_debug_backtrace(self, client, args, range=None):
+        client.debug_backtrace(args, range)
 
     @execute_with_client()
     def com_en_rename(self, client, args, range=None):

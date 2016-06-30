@@ -212,30 +212,30 @@ available.
                                                     *ensime-debugger-commands*
 Debugger Commands~
 
-                                                                *:EnBacktrace*
-:EnBacktrace
+                                                           *:EnDebugBacktrace*
+:EnDebugBacktrace
 
     While debugging and execution is paused, opens a stack trace for the
     current frame in a new buffer.
 
-                                                              *:EnClearBreaks*
-:EnClearBreaks
+                                                         *:EnDebugClearBreaks*
+:EnDebugClearBreaks
 
     Clears all registered debugging breakpoints.
 
-                                                                 *:EnContinue*
-:EnContinue
+                                                            *:EnDebugContinue*
+:EnDebugContinue
 
     Continues execution when debugging, after pausing at a breakpoint.
 
-                                                                    *:EnDebug*
-:EnDebug {host} {port}
+                                                               *:EnDebugStart*
+:EnDebugStart {host} {port}
 
     Begins a debugger session by attaching to the host specified by {host} and
     {port}. See |ensime-debugger| for more detailed usage information.
 
-                                                                 *:EnSetBreak*
-:EnSetBreak
+                                                            *:EnDebugSetBreak*
+:EnDebugSetBreak
 
     Set a debugging breakpoint on the current line. Note that the ENSIME
     server keeps track of the breakpoints, so they can be set before a
@@ -347,14 +347,14 @@ To debug an application using sbt:
      `debugging` command provided by sbt-ensime.
 
   3. Run a process you wish to debug, like with `run` or `testOnly`. You can
-     set breakpoints in Vim before or after this point with |:EnSetBreak|.
+     set breakpoints in Vim before or after this with |:EnDebugSetBreak|.
 
   4. The host should now be waiting for a connection, shown in sbt's output.
 
-  5. Connect with |:EnDebug|, e.g. `:EnDebug localhost 5005`
+  5. Connect with |:EnDebugStart|, e.g. `:EnDebugStart localhost 5005`
 
-  6. Inspect state at your breakpoints with |:EnBacktrace| (more inspections
-     TBD), and |:EnContinue| to proceed.
+  6. Inspect state at your breakpoints with |:EnDebugBacktrace| (more
+     inspections TBD), and |:EnDebugContinue| to proceed.
 
   6. When you've finished your session, reset `debuggingOff` in sbt.
 

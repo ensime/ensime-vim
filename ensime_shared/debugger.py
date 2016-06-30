@@ -25,16 +25,16 @@ class DebuggerClient(object):
         self.vim.current.buffer[:] = to_json
 
 # API Call Build/Send
-    def set_break(self, args, range=None):
-        self.log("set_break: in")
+    def debug_set_break(self, args, range=None):
+        self.log("debug_set_break: in")
         req = {"line": self.cursor()[0],
                "maxResults": 10,
                "typehint": "DebugSetBreakReq",
                "file": self.path()}
         self.send_request(req)
 
-    def clear_breaks(self, args, range=None):
-        self.log("clear_breaks: in")
+    def debug_clear_breaks(self, args, range=None):
+        self.log("debug_clear_breaks: in")
         self.send_request({"typehint": "DebugClearAllBreaksReq"})
 
     def debug_start(self, args, range=None):
@@ -56,8 +56,8 @@ class DebuggerClient(object):
             "typehint": "DebugContinueReq",
             "threadId": self.debug_thread_id})
 
-    def backtrace(self, args, range=None):
-        self.log("backtrace: in")
+    def debug_backtrace(self, args, range=None):
+        self.log("debug_backtrace: in")
         self.send_request({
             "typehint": "DebugBacktraceReq",
             "threadId": self.debug_thread_id,
