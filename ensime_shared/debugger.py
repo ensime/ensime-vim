@@ -1,3 +1,5 @@
+import json
+
 from ensime_shared.config import feedback
 
 class DebuggerClient(object):
@@ -33,7 +35,7 @@ class DebuggerClient(object):
 
     def clear_breaks(self, args, range=None):
         self.log("clear_breaks: in")
-        self.send_request({"typehint": "DebugClearAllBreakReq"})
+        self.send_request({"typehint": "DebugClearAllBreaksReq"})
 
     def debug_start(self, args, range=None):
         self.log("debug_start: in")
