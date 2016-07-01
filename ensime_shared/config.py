@@ -1,3 +1,8 @@
+import os
+
+BOOTSTRAPS_ROOT = os.path.join(os.environ['HOME'], '.config/ensime-vim/')
+"""Default directory where ENSIME server bootstrap projects will be created."""
+
 gconfig = {
     "ensime_server": "ws://127.0.0.1:{}/jerky",
     "localhost": "http://127.0.0.1:{}/{}",

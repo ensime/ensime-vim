@@ -11,6 +11,7 @@ from string import Template
 
 import sexpdata
 
+from ensime_shared.config import BOOTSTRAPS_ROOT
 from ensime_shared.errors import InvalidJavaPathError
 from ensime_shared.util import Util, catch
 
@@ -52,21 +53,12 @@ class EnsimeProcess(object):
     def http_port(self):
         return int(Util.read_file(os.path.join(self.cache_dir, "http")))
 
-join = os.path.join
-home = os.environ["HOME"]
-
-# Use a new path that is clearer and more user-friendly
-_default_base_dir = join(home, ".config/ensime-vim/")
-_old_base_dir = join(home, ".config/classpath_project_ensime")
-if os.path.isdir(_old_base_dir):
-    shutil.move(_old_base_dir, _default_base_dir)
-
 
 class EnsimeLauncher(object):
     ENSIME_VERSION = '1.0.0'
     SBT_VERSION = '0.13.11'
 
-    def __init__(self, vim, config_path, base_dir=_default_base_dir):
+    def __init__(self, vim, config_path, base_dir=BOOTSTRAPS_ROOT):
         self.vim = vim
         self._config_path = os.path.abspath(config_path)
         self.config = self.parse_config(self._config_path)
@@ -74,6 +66,7 @@ class EnsimeLauncher(object):
         self.classpath_file = os.path.join(self.base_dir,
                                            self.config['scala-version'],
                                            'classpath')
+        self._migrate_legacy_bootstrap_location()
 
     def launch(self):
         cache_dir = self.config['cache-dir'],
@@ -296,3 +289,11 @@ saveClasspathTask := {
             success = True
 
         return success
+
+    @staticmethod
+    def _migrate_legacy_bootstrap_location():
+        """Moves an old ENSIME installer root to tidier location."""
+        home = os.environ['HOME']
+        old_base_dir = os.path.join(home, '.config/classpath_project_ensime')
+        if os.path.isdir(old_base_dir):
+            shutil.move(old_base_dir, BOOTSTRAPS_ROOT)
