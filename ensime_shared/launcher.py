@@ -7,6 +7,8 @@ import time
 import shutil
 import fnmatch
 
+from string import Template
+
 import sexpdata
 
 from ensime_shared.errors import InvalidJavaPathError
@@ -191,11 +193,11 @@ class EnsimeLauncher(object):
         return True
 
     def build_sbt(self):
-        src = """
+        src = r"""
 import sbt._
 import IO._
 import java.io._
-scalaVersion := "%(scala_version)"
+scalaVersion := "$scala_version"
 ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 
 // Allows local builds of scala
@@ -208,7 +210,7 @@ resolvers += "Akka Repo" at "http://repo.akka.io/repository"
 resolvers += "NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans"
 
 libraryDependencies ++= Seq(
-  "org.ensime" %% "ensime" % "%(version)",
+  "org.ensime" %% "ensime" % "$version",
   "org.scala-lang" % "scala-compiler" % scalaVersion.value force(),
   "org.scala-lang" % "scala-reflect" % scalaVersion.value force(),
   "org.scala-lang" % "scalap" % scalaVersion.value force()
@@ -219,7 +221,7 @@ val saveClasspathTask = TaskKey[Unit]("saveClasspath", "Save the classpath to a 
 saveClasspathTask := {
   val managed = (managedClasspath in Runtime).value.map(_.data.getAbsolutePath)
   val unmanaged = (unmanagedClasspath in Runtime).value.map(_.data.getAbsolutePath)
-  val out = file("%(classpath_file)")
+  val out = file("$classpath_file")
   write(out, (unmanaged ++ managed).mkString(File.pathSeparator))
 }"""
         replace = {
@@ -227,9 +229,8 @@ saveClasspathTask := {
             "version": self.ENSIME_VERSION,
             "classpath_file": self.classpath_file,
         }
-        for k in replace.keys():
-            src = src.replace("%(" + k + ")", replace[k])
-        return src
+
+        return Template(src).substitute(replace)
 
     @staticmethod
     def parse_config(path):
