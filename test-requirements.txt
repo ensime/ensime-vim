@@ -1,9 +1,12 @@
-Pytest-cov==2.2.1
-flake8==2.5.2
-coveralls==1.1
-autopep8==1.2.1
-lettuce==0.2.21
+# === Test ===
+lettuce~=0.2.21
 
 # Optional speed-up for Lettuce, but Docker image build issue needs fixing, see:
 # https://github.com/ensime/ensime-docker/pull/8
 # python-Levenshtein~=0.12
+
+# === Dev Tooling ===
+flake8~=2.5
+flake8-import-order~=0.8
+autopep8~=1.2
+virtualenv~=15.0

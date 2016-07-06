@@ -1,6 +1,9 @@
 PYTHON := python2
 VENV := .venv
 
+# autopep8 uses pycodestyle but doesn't automatically find files the same way :-/
+REFORMAT := ensime_shared/ rplugin/
+
 activate := $(VENV)/bin/activate
 requirements := requirements.txt test-requirements.txt
 deps := $(VENV)/deps-updated
@@ -18,15 +21,15 @@ $(deps): $(activate) $(requirements)
 	touch $(deps)
 
 lint: $(deps)
-	. $(activate) && flake8 --max-complexity=10 *.py **/*.py
+	. $(activate) && flake8 --statistics --count --show-source
 
 format: $(deps)
-	. $(activate) && autopep8 -aaa --in-place *.py **/*.py
+	. $(activate) && autopep8 -aaa --in-place -r $(REFORMAT)
 
 clean:
 	@echo Cleaning build artifacts, including the virtualenv...
 	-rm -rf $(VENV)
-	-find . -name '*.pyc' -exec rm -f {} +
-	-find . -name '*.pyo' -exec rm -f {} +
+	-find . -type f -name '*.py[c|o]' -delete
+	-find . -type d -name '__pycache__' -delete
 
 .PHONY: test lint format clean
