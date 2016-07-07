@@ -21,12 +21,13 @@ feedback = {
     "missing_debug_class": "You must specify a class to debug",
     "module_missing": "{} missing: do a `pip install {}` and restart vim",
     "notify_break": "Execution breaked at {} {}",
+    "prompt_server_install":
+        "Please run :EnInstall to install the ENSIME server for Scala {scala_version}",
     "spawned_browser": "Opened tab {}",
     "start_message": "Server has been started...",
     "typechecking": "Typechecking...",
     "unhandled_response": "Response {} has not been handled",
     "unknown_symbol": "Symbol not found",
-    "warn_classpath": "Execute :EnClasspath to set a classpath",
 }
 
 commands = {

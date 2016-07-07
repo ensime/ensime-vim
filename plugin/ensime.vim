@@ -12,7 +12,7 @@ augroup ensime
     autocmd CursorMoved *.scala call ensime#au_cursor_moved(expand("<afile>"))
 augroup END
 
-command! -nargs=* -range EnClasspath call ensime#com_en_classpath([<f-args>], '')
+command! -nargs=* -range EnInstall call ensime#com_en_install([<f-args>], '')
 command! -nargs=* -range EnNoTeardown call ensime#com_en_no_teardown([<f-args>], '')
 command! -nargs=* -range EnTypeCheck call ensime#com_en_type_check([<f-args>], '')
 command! -nargs=* -range EnType call ensime#com_en_type([<f-args>], '')

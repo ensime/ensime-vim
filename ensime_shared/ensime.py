@@ -191,18 +191,20 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
         vim_cmd = commands[key]
         return self.vim.eval(vim_cmd)
 
-    def setup(self, quiet=False, create_classpath=False):
+    def setup(self, quiet=False, bootstrap_server=False):
         """Check the classpath and connect to the server if necessary."""
         def lazy_initialize_ensime():
             if not self.ensime:
                 called_by = inspect.stack()[4][3]
                 self.log(str(inspect.stack()))
-                self.log("setup(quiet={}, create_classpath={}) called by {}()"
-                         .format(quiet, create_classpath, called_by))
+                self.log("setup(quiet={}, bootstrap_server={}) called by {}()"
+                         .format(quiet, bootstrap_server, called_by))
                 no_classpath = not os.path.exists(self.launcher.classpath_file)
-                if not create_classpath and no_classpath:
+                if not bootstrap_server and no_classpath:
                     if not quiet:
-                        self.message("warn_classpath")
+                        scala = self.launcher.config.get('scala-version')
+                        msg = feedback["prompt_server_install"].format(scala_version=scala)
+                        self.raw_message(msg)
                     return False
 
                 try:
@@ -648,8 +650,15 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
         self.type_check("")
         self.vim.command('silent !echo "Typechecking..."')
 
-    def en_classpath(self, args, range=None):
-        self.log("en_classpath: in")
+    def en_install(self, args, range=None):
+        """Bootstrap ENSIME server installation.
+
+        Enabling the bootstrapping actually happens in the execute_with_client
+        decorator when this is called, so this function is a no-op endpoint for
+        the Vim command.
+        TODO: this is confusing...
+        """
+        self.log("en_install: in")
 
     def format_source(self, args, range=None):
         self.log("type_check_cmd: in")
@@ -1008,7 +1017,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, object):
 
 
 def execute_with_client(quiet=False,
-                        create_classpath=False,
+                        bootstrap_server=False,
                         create_client=True):
     """Decorator that gets a client and performs an operation on it."""
     def wrapper(f):
@@ -1016,7 +1025,7 @@ def execute_with_client(quiet=False,
         def wrapper2(self, *args, **kwargs):
             client = self.current_client(
                 quiet=quiet,
-                create_classpath=create_classpath,
+                bootstrap_server=bootstrap_server,
                 create_client=create_client)
             if client and client.running:
                 return f(self, client, *args, **kwargs)
@@ -1063,7 +1072,7 @@ class Ensime(object):
         for c in self.clients.values():
             c.teardown()
 
-    def current_client(self, quiet, create_classpath, create_client):
+    def current_client(self, quiet, bootstrap_server, create_client):
         """Return the current client for a given project."""
         # Use current_file command because we cannot access self.vim
         current_file_cmd = commands["current_file"]
@@ -1073,7 +1082,7 @@ class Ensime(object):
             return self.client_for(
                 config_path,
                 quiet=quiet,
-                create_classpath=create_classpath,
+                bootstrap_server=bootstrap_server,
                 create_client=create_client)
 
     def find_config_path(self, path):
@@ -1089,7 +1098,7 @@ class Ensime(object):
 
         return config_path
 
-    def client_for(self, config_path, quiet=False, create_classpath=False,
+    def client_for(self, config_path, quiet=False, bootstrap_server=False,
                    create_client=False):
         """Get a cached client for a project, otherwise create one."""
         client = None
@@ -1099,7 +1108,7 @@ class Ensime(object):
         elif create_client:
             launcher = EnsimeLauncher(self.vim, config_path)
             client = EnsimeClient(self.vim, launcher, config_path)
-            if client.setup(quiet=quiet, create_classpath=create_classpath):
+            if client.setup(quiet=quiet, bootstrap_server=bootstrap_server):
                 self.clients[abs_path] = client
         return client
 
@@ -1179,9 +1188,9 @@ class Ensime(object):
     def com_en_debug_start(self, client, args, range=None):
         client.debug_start(args, range)
 
-    @execute_with_client(create_classpath=True)
-    def com_en_classpath(self, client, args, range=None):
-        client.en_classpath(args, range)
+    @execute_with_client(bootstrap_server=True)
+    def com_en_install(self, client, args, range=None):
+        client.en_install(args, range)
 
     @execute_with_client()
     def com_en_debug_continue(self, client, args, range=None):

@@ -98,7 +98,7 @@ Bootstrap ENSIME~
 
 The first time you use ensime-vim (per Scala version), it will "bootstrap" the
 ENSIME server installation for you--when opening a Scala file you will be
-prompted to run |:EnClasspath|. Do that and give it a minute or two to run.
+prompted to run |:EnInstall|. Do that and give it a minute or two to run.
 
 After this, you should see reports in Vim's message area that ENSIME is coming
 up, and the indexer and analyzer are ready. You're ready to go! Compile your
@@ -115,8 +115,8 @@ All commands are buffer-local, unless otherwise stated. This means you must
 edit a Scala file (Java coming soon...) in order for the commands to be
 available.
 
-                                                                *:EnClasspath*
-:EnClasspath
+                                                                  *:EnInstall*
+:EnInstall
 
     Bootstraps installation of the ENSIME server and starts it. Generally only
     needed on your first-time setup, or once per Scala version if you start
@@ -466,7 +466,7 @@ To trigger an update of ENSIME server, nuke the bootstrap project: >
 
     $ rm -rf ~/.config/ensime-vim/<your Scala version>
 
-Restart Vim and run |:EnClasspath|.
+Restart Vim and run |:EnInstall|.
 
 If you're debugging an issue or working on implementing a new feature, you'll
 find the logs useful -- relative to your project, check: >

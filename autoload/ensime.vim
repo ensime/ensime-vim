@@ -155,8 +155,8 @@ function! ensime#com_en_debug_start(args, range) abort
     return s:call_plugin('com_en_debug_start', [a:args, a:range])
 endfunction
 
-function! ensime#com_en_classpath(args, range) abort
-    return s:call_plugin('com_en_classpath', [a:args, a:range])
+function! ensime#com_en_install(args, range) abort
+    return s:call_plugin('com_en_install', [a:args, a:range])
 endfunction
 
 function! ensime#com_en_debug_continue(args, range) abort
