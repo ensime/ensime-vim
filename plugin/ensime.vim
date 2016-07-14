@@ -1,6 +1,20 @@
-if has('nvim') | finish | endif
 if exists('g:loaded_ensime') || &cp
     finish
+else
+    if !has('python')
+        echohl WarningMsg
+        echomsg '[ensime] Your Vim build is missing +python support, ensime-vim will not be loaded.'
+        if has('nvim')
+            echomsg '[ensime] Did you remember to `pip2 install neovim`?'
+        else
+            echomsg '[ensime] Please review the installation guide.'
+        endif
+        echohl None
+        finish
+    endif
+
+    " Defer to the rplugin for Neovim
+    if has('nvim') | finish | endif
 endif
 
 augroup ensime
