@@ -1,0 +1,11 @@
+set nowritebackup
+set nobackup
+set noswapfile
+
+" Exclude user runtime files searched by default
+let &runtimepath = $VIMRUNTIME
+exec 'set runtimepath+=' . expand('<sfile>:p:h:h:h')
+
+runtime plugin/ensime.vim
+
+filetype plugin on
