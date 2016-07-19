@@ -875,7 +875,7 @@ class Ensime(object):
 
     def get_setting(self, key, default):
         gkey = "g:ensime_{}".format(key)
-        key_exists = self.vim.eval("exists('{}')".format(gkey)) 
+        key_exists = int(self.vim.eval("exists('{}')".format(gkey))) 
         return self.vim.eval(gkey) if key_exists else default
 
     def init_integrations(self):
