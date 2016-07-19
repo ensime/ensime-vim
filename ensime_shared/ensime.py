@@ -871,12 +871,18 @@ class Ensime(object):
         self.init_integrations()
 
     def init_settings(self):
+        """Loads all the settings from the ``g:ensime_*`` namespace.
+        
+        Invoked on client creation to avoid ``autocmd`` deadlocks.
+        """
         self.server_v2 = bool(self.get_setting('server_v2', 0))
 
     def get_setting(self, key, default):
-        gkey = "g:ensime_{}".format(key)
-        key_exists = int(self.vim.eval("exists('{}')".format(gkey))) 
-        return self.vim.eval(gkey) if key_exists else default
+        """Returns the value of a Vim variable ``g:ensime_{key}``
+        if it is set, and ``default`` otherwise.
+        """
+        gkey = "ensime_{}".format(key)
+        return self.vim.vars.get(gkey, default)
 
     def init_integrations(self):
         syntastic_runtime = os.path.abspath(
