@@ -4,7 +4,9 @@ import datetime
 import inspect
 import json
 import os
+import shutil
 import sys
+import tempfile
 import time
 from subprocess import PIPE, Popen
 from threading import Thread
@@ -81,13 +83,15 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
 
         def fetch_runtime_paths():
             """Fetch all the runtime paths of ensime-vim plugin."""
-            paths = self.vim_eval("runtimepath")
-            tag = "ensime-vim"
-            ps = [p for p in paths.split(',') if tag in p]
-            home = os.environ.get("HOME")
-            if home:
-                ps = map(lambda s: s.replace(home, "~"), ps)
-            return ps
+            runtimepath = self.vim_eval("runtimepath")
+            plugin = "ensime-vim"
+            paths = []
+
+            for path in runtimepath.split(','):
+                if plugin in path:
+                    paths.append(os.path.expanduser(path))
+
+            return paths
 
         setup_logger_and_paths()
         setup_vim()
@@ -118,8 +122,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
 
         self.toggle_teardown = True
         self.connection_attempts = 0
-        self.tmp_diff_folder = "/tmp/ensime-vim/diffs/"
-        Util.mkdir_p(self.tmp_diff_folder)
+        self.tmp_diff_folder = tempfile.mkdtemp(prefix='ensime-vim-diffs')
 
         # Set the runtime path here in case we need
         # to disable the plugin. It needs to be done
@@ -303,6 +306,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         self.log("teardown: in")
         self.running = False
         self.shutdown_server()
+        shutil.rmtree(self.tmp_diff_folder, ignore_errors=True)
 
     def cursor(self):
         """Return the row and col of the current buffer."""

@@ -105,7 +105,7 @@ class EnsimeLauncher(object):
         Util.mkdir_p(cache_dir)
         log_path = os.path.join(cache_dir, "server.log")
         log = open(log_path, "w")
-        null = open("/dev/null", "r")
+        null = open(os.devnull, "r")
         java = os.path.join(self.config['java-home'], 'bin', 'java')
 
         if not os.path.exists(java):
@@ -128,6 +128,7 @@ class EnsimeLauncher(object):
 
         def on_stop():
             log.close()
+            null.close()
             with catch(Exception, lambda e: None):
                 os.remove(pid_path)
 
