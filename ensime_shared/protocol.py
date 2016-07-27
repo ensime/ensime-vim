@@ -232,7 +232,8 @@ class ProtocolHandlerV1(ProtocolHandler):
 
     def handle_completion_info_list(self, call_id, payload):
         """Handler for a completion response."""
-        completions = payload["completions"]
+        # filter out completions without `typeInfo` field to avoid server bug. See #324
+        completions = [c for c in payload["completions"] if "typeInfo" in c]
         self.log("handle_completion_info_list: in")
         self.suggestions = [completion_to_suggest(c) for c in completions]
         self.log("handle_completion_info_list: {}".format(self.suggestions))
