@@ -1,6 +1,8 @@
 # === Test ===
 coverage~=4.2
 lettuce~=0.2.21
+neovim~=0.1
+psutil~=4.3
 pytest~=2.9
 
 # Optional speed-up for Lettuce, but Docker image build issue needs fixing, see:

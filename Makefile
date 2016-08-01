@@ -1,5 +1,6 @@
 PYTHON := python2
 VENV ?= .venv
+NVIM := nvim
 
 # autopep8 uses pycodestyle but doesn't automatically find files the same way :-/
 REFORMAT := ensime_shared/ rplugin/
@@ -9,6 +10,10 @@ requirements := requirements.txt test-requirements.txt
 deps := $(VENV)/deps-updated
 
 features := test/features
+test_resources := test/resources
+vimrc := $(test_resources)/vimrc
+rplugin_manifest := $(test_resources)/.vimrc-rplugin~
+
 
 test: unit integration
 
@@ -24,7 +29,7 @@ unit: $(deps)
 	@echo "Running ensime-vim unit tests"
 	. $(activate) && py.test
 
-integration: $(deps)
+integration: $(deps) $(rplugin_manifest)
 	@echo "Running ensime-vim lettuce tests"
 	. $(activate) && lettuce $(features)
 
@@ -50,9 +55,13 @@ clean:
 	-find . -type d -name '__pycache__' -delete
 	. $(activate) && coverage erase
 	-$(RM) -r htmlcov
+	-$(RM) $(rplugin_manifest)
 
 distclean: clean
 	@echo Cleaning the virtualenv...
 	-rm -rf $(VENV)
 
 .PHONY: test unit integration coverage lint format clean distclean
+
+$(rplugin_manifest): rplugin/python/ensime.py
+	$(NVIM) -u $(vimrc) -c 'UpdateRemotePlugins' -c 'quit'
