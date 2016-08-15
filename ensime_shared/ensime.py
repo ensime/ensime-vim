@@ -588,7 +588,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         """Browse doc of whatever at cursor."""
         self.log.debug('browse: in')
         self.call_options[self.call_id] = {"browse": True}
-        self.doc_uri(args, range=None)
+        self.send_at_position("DocUri", "point")
 
     def rename(self, new_name, range=None):
         """Request a rename to the server."""

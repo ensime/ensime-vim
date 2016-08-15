@@ -143,15 +143,6 @@ available.
     works offline using cached doc jars. See |ensime-custom-browser| to
     customize the browser used if heuristics don't pick the one you prefer.
 
-                                                                   *:EnDocUri*
-:EnDocUri
-
-    Displays documentation URL for the symbol under the cursor.
->
-    TODO: seems broken for me, and like :EnSymbol I can't think of good use
-    cases to support exposing this as a command, perhaps a function.
-<
-
                                                              *:EnFormatSource*
 :EnFormatSource
 

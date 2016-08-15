@@ -85,9 +85,6 @@ class ProtocolHandler(object):
     def handle_string_response(self, call_id, payload):
         raise NotImplementedError()
 
-    def handle_doc_uri(self, call_id, payload):
-        raise NotImplementedError()
-
     def handle_completion_info_list(self, call_id, payload):
         raise NotImplementedError()
 
@@ -202,34 +199,43 @@ class ProtocolHandlerV1(ProtocolHandler):
           2. `DebugToStringReq`
           3. `FormatOneSourceReq`
         """
-        self.log.debug('handle_string_response: in %s', payload)
-        self.handle_doc_uri(call_id, payload)
+        self.log.debug('handle_string_response: in [typehint: %s, call ID: %s]',
+                       payload['typehint'], call_id)
 
-    def handle_doc_uri(self, call_id, payload):
-        """Handler for responses of Doc URIs."""
-        if not self.en_format_source_id:
-            self.log.debug('handle_doc_uri: received doc path')
+        if self.en_format_source_id:  # User requested :EnFormatSource
+            self._format_source_file(payload['text'])
+            self.en_format_source_id = None
+            return
+
+        # :EnDocBrowse or :EnDocUri
+        url = payload['text']
+        if not url.startswith('http'):
             port = self.ensime.http_port()
+            url = gconfig['localhost'].format(port, url)
 
-            url = payload["text"]
-
-            if not url.startswith("http"):
-                url = gconfig["localhost"].format(port, payload["text"])
-
-            if self.call_options[call_id].get('browse'):
-                self.log.debug('handle_doc_uri: browsing doc path %s', url)
-                try:
-                    if webbrowser.open(url):
-                        self.log.info('opened %s', url)
-                except webbrowser.Error:
-                    self.log.exception('handle_doc_uri: webbrowser error')
-                    self.raw_message(feedback["manual_doc"].format(url))
-
+        options = self.call_options.get(call_id)
+        if options and options.get('browse'):
+            self._browse_doc(url)
             del self.call_options[call_id]
         else:
-            self.vim.current.buffer[:] = \
-                [line.encode('utf-8') for line in payload["text"].split("\n")]
-            self.en_format_source_id = None
+            # TODO: make this return value of a Vim function synchronously, how?
+            self.log.debug('EnDocUri %s', url)
+            return url
+
+    def _format_source_file(self, newtext):
+        self.vim.current.buffer[:] = [  # FIXME: should assure original buffer
+            line.encode('utf-8')
+            for line in newtext.split('\n')
+        ]
+
+    def _browse_doc(self, url):
+        self.log.debug('_browse_doc: %s', url)
+        try:
+            if webbrowser.open(url):
+                self.log.info('opened %s', url)
+        except webbrowser.Error:
+            self.log.exception('_browse_doc: webbrowser error')
+            self.raw_message(feedback["manual_doc"].format(url))
 
     def handle_completion_info_list(self, call_id, payload):
         """Handler for a completion response."""
