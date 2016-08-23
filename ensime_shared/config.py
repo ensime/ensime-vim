@@ -13,7 +13,7 @@ BOOTSTRAPS_ROOT = os.path.join(os.environ['HOME'], '.config/ensime-vim/')
 LOG_FORMAT = '%(levelname)-8s <%(asctime)s> (%(filename)s:%(lineno)d) - %(message)s'
 
 gconfig = {
-    "ensime_server": "ws://127.0.0.1:{}/jerky",
+    "ensime_server": "ws://127.0.0.1:{}/{}",
     "localhost": "http://127.0.0.1:{}/{}",
 }
 

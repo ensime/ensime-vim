@@ -275,11 +275,15 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
             self.number_try_connection -= 1
             if not self.ensime_server:
                 port = self.ensime.http_port()
-                self.ensime_server = gconfig["ensime_server"].format(port)
+                uri = "websocket" if self.launcher.server_v2 else "jerky"
+                self.ensime_server = gconfig["ensime_server"].format(port, uri)
             with catch(Exception, disable_completely):
                 from websocket import create_connection
                 # Use the default timeout (no timeout).
-                self.ws = create_connection(self.ensime_server)
+                options = {"subprotocols": ["jerky"]} if self.launcher.server_v2 else {}
+                self.log.debug("About to connect to %s with options %s",
+                               self.ensime_server, options)
+                self.ws = create_connection(self.ensime_server, **options)
             if self.ws:
                 self.send_request({"typehint": "ConnectionInfoReq"})
         else:

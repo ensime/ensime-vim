@@ -61,6 +61,7 @@ class EnsimeLauncher(object):
 
     def __init__(self, vim, config_path, server_v2, base_dir=BOOTSTRAPS_ROOT):
         self.vim = vim
+        self.server_v2 = server_v2
         self.ensime_version = self.ENSIME_V2 if server_v2 else self.ENSIME_V1
         self._config_path = os.path.abspath(config_path)
         self.config = ProjectConfig(self._config_path)
