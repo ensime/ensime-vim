@@ -65,9 +65,11 @@ class EnsimeLauncher(object):
         self.ensime_version = self.ENSIME_V2 if server_v2 else self.ENSIME_V1
         self._config_path = os.path.abspath(config_path)
         self.config = ProjectConfig(self._config_path)
+        self.scala_minor = self.config['scala-version'][:4]
         self.base_dir = os.path.abspath(base_dir)
         self.classpath_file = os.path.join(self.base_dir,
-                                           self.config['scala-version'],
+                                           self.scala_minor,
+                                           self.ensime_version,
                                            'classpath')
         self._migrate_legacy_bootstrap_location()
 
@@ -90,9 +92,8 @@ class EnsimeLauncher(object):
 
         # Allow override with a local development server jar, see:
         # http://ensime.github.io/contributing/#manual-qa-testing
-        scala_minor = self.config['scala-version'][:4]
         for x in os.listdir(self.base_dir):
-            if fnmatch.fnmatch(x, "ensime_" + scala_minor + "*-assembly.jar"):
+            if fnmatch.fnmatch(x, "ensime_" + self.scala_minor + "*-assembly.jar"):
                 classpath = os.path.join(self.base_dir, x) + ":" + classpath
 
         return classpath
