@@ -25,7 +25,9 @@ class TypecheckHandler(object):
 
         Calls editor to display/highlight line notes and clears notes buffer.
         """
+        self.log.debug('handle_typecheck_complete: in')
         if not self.currently_buffering_typechecks:
+            self.log.debug('Completed typecheck was not requested by user, not displaying notes')
             return
 
         self.editor.display_notes(self.buffered_notes)

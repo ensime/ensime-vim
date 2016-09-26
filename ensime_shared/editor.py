@@ -357,7 +357,7 @@ class Editor(object):
         """Renders "notes" reported by ENSIME, such as typecheck errors."""
 
         # TODO: this can probably be a cached property like isneovim
-        hassyntastic = bool(self._vim.eval('exists(":SyntasticCheck")'))
+        hassyntastic = bool(int(self._vim.eval('exists(":SyntasticCheck")')))
 
         if hassyntastic:
             self.__display_notes_with_syntastic(notes)
@@ -395,7 +395,7 @@ class Editor(object):
 
     def __display_notes(self, notes):
         current_file = self.path()
-        highlight_cmd = r"matchadd('EnErrorStyle', '\\%{}l\\%>{}c\\%<{}c')"
+        highlight_cmd = r"matchadd('EnErrorStyle', '\%{}l\%>{}c\%<{}c')"
 
         for note in notes:
             l = note['line']
