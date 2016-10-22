@@ -134,10 +134,6 @@ class Ensime(object):
         client.toggle_fulltype(None)
 
     @execute_with_client()
-    def com_en_format_source(self, client, args, range=None):
-        client.format_source(None)
-
-    @execute_with_client()
     def com_en_declaration(self, client, args, range=None):
         client.open_declaration(args, range)
 

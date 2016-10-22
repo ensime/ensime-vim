@@ -188,15 +188,9 @@ class ProtocolHandlerV1(ProtocolHandler):
         This is the response for the following requests:
           1. `DocUriAtPointReq` or `DocUriForSymbolReq`
           2. `DebugToStringReq`
-          3. `FormatOneSourceReq`
         """
         self.log.debug('handle_string_response: in [typehint: %s, call ID: %s]',
                        payload['typehint'], call_id)
-
-        if self.en_format_source_id:  # User requested :EnFormatSource
-            self._format_source_file(payload['text'])
-            self.en_format_source_id = None
-            return
 
         # :EnDocBrowse or :EnDocUri
         url = payload['text']
@@ -212,11 +206,6 @@ class ProtocolHandlerV1(ProtocolHandler):
             # TODO: make this return value of a Vim function synchronously, how?
             self.log.debug('EnDocUri %s', url)
             return url
-
-    def _format_source_file(self, newtext):
-        formatted = [line.encode('utf-8') for line in newtext.split('\n')]
-        # FIXME: should assure original buffer, not whatever is now current
-        self.editor.replace_buffer_contents(formatted)
 
     def _browse_doc(self, url):
         self.log.debug('_browse_doc: %s', url)

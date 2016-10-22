@@ -121,7 +121,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         self.suggestions = None
         self.completion_timeout = 10  # seconds
         self.completion_started = False
-        self.en_format_source_id = None
 
         self.full_types_enabled = False
         """Whether fully-qualified types are displayed by inspections or not"""
@@ -391,12 +390,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         TODO: this is confusing...
         """
         self.log.debug('en_install: in')
-
-    def format_source(self, args, range=None):
-        self.log.debug('type_check_cmd: in')
-        req = {"typehint": "FormatOneSourceReq",
-               "file": self._file_info()}
-        self.en_format_source_id = self.send_request(req)
 
     def type(self, args, range=None):
         self.log.debug('type: in')

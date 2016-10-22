@@ -83,10 +83,6 @@ function! ensime#com_en_toggle_fulltype(args, range) abort
     return s:call_plugin('com_en_toggle_fulltype', [a:args, a:range])
 endfunction
 
-function! ensime#com_en_format_source(args, range) abort
-    return s:call_plugin('com_en_format_source', [a:args, a:range])
-endfunction
-
 function! ensime#com_en_declaration(args, range) abort
     return s:call_plugin('com_en_declaration', [a:args, a:range])
 endfunction

@@ -108,22 +108,6 @@ class Editor(object):
 
         return choices[choice - 1]
 
-    def replace_buffer_contents(self, lines, bufnr=None):
-        """Replaces the contents of a buffer.
-
-        Args:
-            lines (Sequence[str]): Lines of text to insert.
-            bufnr (Optional[int]): A Vim buffer number, current if ``None``.
-
-        Todo:
-            Is there a more general Vim function analog to mimic? setlines()
-            with a list arg is close but won't affect lines at the end of a
-            file if the new content is shorter, would need to be two steps of
-            delete then append().
-        """
-        buf = self._vim.buffers[bufnr] if bufnr else self._vim.current.buffer
-        buf[:] = lines
-
     def set_buffer_options(self, options, bufnr=None):
         """Set buffer-local options for a buffer, defaulting to current.
 
