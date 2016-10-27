@@ -62,10 +62,6 @@ class NeovimEnsime(Ensime):
     def com_en_toggle_fulltype(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_toggle_fulltype(*args, **kwargs)
 
-    @neovim.command('EnFormatSource', **command_params)
-    def com_en_format_source(self, *args, **kwargs):
-        super(NeovimEnsime, self).com_en_format_source(*args, **kwargs)
-
     @neovim.command('EnDeclaration', **command_params)
     def com_en_declaration(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_declaration(*args, **kwargs)
