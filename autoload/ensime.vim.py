@@ -9,18 +9,12 @@ import vim
 
 def ensime_init_path():
     path = os.path.abspath(inspect.getfile(inspect.currentframe()))
-    dir_file1 = os.path.split(path)
-    path_fn = dir_file1[1]
-    dir_file2 = os.path.split(dir_file1[0])
-    path_dir1 = dir_file2[1]
-    dir_file3 = os.path.split(dir_file2[0])
-    path_dir2 = dir_file3[1]
-    expected_nvim_path_end = ['rplugin', 'python', 'ensime.py']
-    expected_vim_path_end = ['autoload','ensime.vim.py']
-    if expected_nvim_path_end == [path_dir2, path_dir1, path_fn]: # nvim rplugin
+    expected_nvim_path_end = os.path.join('rplugin', 'python', 'ensime.py')
+    expected_vim_path_end = os.path.join('autoload', 'ensime.vim.py')
+    if path.endswith(expected_nvim_path_end):  # nvim rplugin
         sys.path.append(os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(path)))))
-    elif expected_vim_path_end == [path_dir1, path_fn]: # vim plugin
+    elif path.endswith(expected_vim_path_end):  # vim plugin
         sys.path.append(os.path.join(
             os.path.dirname(os.path.dirname(path))))
 
