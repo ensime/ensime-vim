@@ -149,10 +149,11 @@ available.
     supertypes.
 
                                                                    *:EnSearch*
-:EnSearch {symbol}
+:EnSearch {term}
 
-    In theory, this invokes a global search for types or methods matching
-    {symbol}. In practice, it throws an error for me currently... YMMV.
+    Searches across the project and its dependencies for symbols matching
+    {term}, loading results into the |quickfix| list. The term may be a
+    substring match of the symbol name.
 
                                                                    *:EnSymbol*
 :EnSymbol
@@ -316,11 +317,7 @@ symbol by pressing <Space> on the symbol's line. There is a bit of a lag from
 the server, but the symbol's definition will be opened in a new vertical
 split.
 
-NOTE: Currently the vertical split is not opened until you navigate away from
-the Package Inspector window to a Scala file. This should be addressed in the
-future.
-
-Stay to tuned for the Inspector to grow new features as additional planned
+Stay tuned for the Inspector to grow new features as additional planned
 server support comes along.
 
 ------------------------------------------------------------------------------
@@ -505,4 +502,15 @@ and
 >
     $ pip show sexpdata | grep Location
 <
+Debug Logging~
+
+You can enable much more verbose logging that may be useful for
+troubleshooting or plugin development. This is done with an environment
+variable, `ENSIME_VIM_DEBUG` -- enable this in your vimrc with: >
+
+    let $ENSIME_VIM_DEBUG = 1
+
+or simply start Vim with e.g. `ENSIME_VIM_DEBUG=1 vim myfile.scala` and
+inspect `.ensime_cache/ensime-vim.log` in your project.
+
  vim:tw=78:et:sw=4:ts=4:ft=help:norl:
