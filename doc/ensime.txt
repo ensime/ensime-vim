@@ -48,7 +48,6 @@ supports are:
     * Refactorings: rename, inline local, more on the way
     * Auto-importing, organize imports
     * Documentation lookups, offline from local jars
-    * Source formatting based on Scalariform
 
 and more, with new features being added regularly by an active community.
 
@@ -142,14 +141,6 @@ available.
     Opens documentation for the symbol under the cursor in a browser. This
     works offline using cached doc jars. See |ensime-custom-browser| to
     customize the browser used if heuristics don't pick the one you prefer.
-
-                                                             *:EnFormatSource*
-:EnFormatSource
-
-    Formats buffer with Scalariform.
-    Note: Formatting settings may only be configurable currently if using sbt
-    as your build tool, and even that may have some limitations:
-    https://github.com/ensime/ensime-sbt/issues/148
 
                                                               *:EnInspectType*
 :EnInspectType
