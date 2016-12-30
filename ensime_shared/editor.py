@@ -281,7 +281,7 @@ class Editor(object):
         self._errors = []
         self._matches = []
         # Reset Syntastic notes - TODO: bufdo?
-        self._vim.current.buffer.vars['ensime_scala_notes'] = []
+        self._vim.current.buffer.vars['ensime_notes'] = []
 
     def message(self, key):
         """Display a message already defined in `feedback`."""
@@ -371,10 +371,10 @@ class Editor(object):
 
         if loclist:
             bufvars = self._vim.current.buffer.vars
-            if not bufvars.get('ensime_scala_notes'):
-                bufvars['ensime_scala_notes'] = []
+            if not bufvars.get('ensime_notes'):
+                bufvars['ensime_notes'] = []
 
-            bufvars['ensime_scala_notes'] += loclist
+            bufvars['ensime_notes'] += loclist
             self._vim.command('silent! SyntasticCheck ensime')
 
     def __display_notes(self, notes):

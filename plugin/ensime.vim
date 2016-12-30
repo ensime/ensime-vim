@@ -19,11 +19,11 @@ endif
 
 augroup ensime
     autocmd!
-    autocmd VimLeave *.scala call ensime#au_vim_leave(expand("<afile>"))
-    autocmd VimEnter *.scala call ensime#au_vim_enter(expand("<afile>"))
-    autocmd BufLeave *.scala call ensime#au_buf_leave(expand("<afile>"))
-    autocmd CursorHold *.scala call ensime#au_cursor_hold(expand("<afile>"))
-    autocmd CursorMoved *.scala call ensime#au_cursor_moved(expand("<afile>"))
+    autocmd VimLeave *.java,*.scala call ensime#au_vim_leave(expand("<afile>"))
+    autocmd VimEnter *.java,*.scala call ensime#au_vim_enter(expand("<afile>"))
+    autocmd BufLeave *.java,*.scala call ensime#au_buf_leave(expand("<afile>"))
+    autocmd CursorHold *.java,*.scala call ensime#au_cursor_hold(expand("<afile>"))
+    autocmd CursorMoved *.java,*.scala call ensime#au_cursor_moved(expand("<afile>"))
 augroup END
 
 command! -nargs=* -range EnInstall call ensime#com_en_install([<f-args>], '')

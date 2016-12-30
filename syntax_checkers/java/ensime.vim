@@ -1,11 +1,11 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! SyntaxCheckers_scala_ensime_IsAvailable() dict
+function! SyntaxCheckers_java_ensime_IsAvailable() dict
     return 1
 endfunction
 
-function! SyntaxCheckers_scala_ensime_GetLocList() dict
+function! SyntaxCheckers_java_ensime_GetLocList() dict
     if exists('b:ensime_notes')
         return b:ensime_notes
     else
@@ -13,7 +13,7 @@ function! SyntaxCheckers_scala_ensime_GetLocList() dict
     endif
 endfunction
 
-function! SyntaxCheckers_scala_ensime_GetHighlightRegex(error)
+function! SyntaxCheckers_java_ensime_GetHighlightRegex(error)
     if a:error['len']
         let lcol = a:error['col'] - 1
         let rcol = a:error['col'] + a:error['len'] - 1
@@ -26,7 +26,7 @@ function! SyntaxCheckers_scala_ensime_GetHighlightRegex(error)
 endfunction
 
 call g:SyntasticRegistry.CreateAndRegisterChecker({
-            \ 'filetype': 'scala',
+            \ 'filetype': 'java',
             \ 'name': 'ensime',
             \ 'exec': '/bin/true'
             \ })

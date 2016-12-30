@@ -27,6 +27,7 @@ class ProtocolHandler(object):
         self.handlers["IndexerReadyEvent"] = self.handle_indexer_ready
         self.handlers["AnalyzerReadyEvent"] = self.handle_analyzer_ready
         self.handlers["NewScalaNotesEvent"] = self.buffer_typechecks
+        self.handlers["NewJavaNotesEvent"] = self.buffer_typechecks_and_display
         self.handlers["BasicTypeInfo"] = self.show_type
         self.handlers["ArrowTypeInfo"] = self.show_type
         self.handlers["FullTypeCheckCompleteEvent"] = self.handle_typecheck_complete
