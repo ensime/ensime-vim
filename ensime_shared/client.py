@@ -693,7 +693,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
             row, col = self.editor.cursor()
             start = col
             line = self.editor.getline()
-            while start > 0 and line[start - 1] not in " .":
+            while start > 0 and line[start - 1] not in " .,([{":
                 start -= 1
             # Start should be 1 when startcol is zero
             return row, col, start if start else 1
