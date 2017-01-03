@@ -21,7 +21,7 @@ class Util:
 
     @staticmethod
     def mkdir_p(path):
-        if not os.path.exists(path):
+        if not os.path.isdir(path):
             os.makedirs(path)
 
     @staticmethod

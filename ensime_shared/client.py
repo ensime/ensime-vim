@@ -1,6 +1,5 @@
 # coding: utf-8
 
-import inspect
 import json
 import logging
 import os
@@ -13,9 +12,8 @@ from threading import Thread
 
 import websocket
 
-from .config import feedback, gconfig, LOG_FORMAT
+from .config import LOG_FORMAT
 from .debugger import DebuggerClient
-from .errors import InvalidJavaPathError
 from .protocol import ProtocolHandler, ProtocolHandlerV1, ProtocolHandlerV2
 from .typecheck import TypecheckHandler
 from .util import catch, Pretty, Util
@@ -50,12 +48,12 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
     which stores the a handler per response type.
     """
 
-    def __init__(self, editor, launcher):  # noqa: C901 FIXME
+    def __init__(self, editor, config):
         # Our use case of a logger per class instance with independent log files
         # requires a bunch of manual programmatic config :-/
         def setup_logger():
             path = os.path
-            config = self.launcher.config
+            config = self.config
             projectdir = path.abspath(config['root-dir'])
             project = config.get('name', path.basename(projectdir))
             logger = logging.getLogger(__name__).getChild(project)
@@ -65,15 +63,14 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
             else:
                 logger.setLevel(logging.INFO)
 
-            # The launcher also creates this - if we refactored the weird
-            # lazy_initialize_ensime path this could go away. Fixes C901.
+            # The server launcher creates this, but we shouldn't depend on that
+            # for testing, etc.
             logdir = config['cache-dir']
-            if not path.isdir(logdir):
-                try:
-                    os.mkdir(logdir)
-                except OSError:
-                    logger.addHandler(logging.NullHandler())
-                    return logger
+            try:
+                Util.mkdir_p(logdir)
+            except OSError:
+                logger.addHandler(logging.NullHandler())
+                return logger
 
             logfile = path.join(logdir, 'ensime-vim.log')
             handler = logging.FileHandler(logfile, mode='w')
@@ -85,23 +82,24 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
 
         super(EnsimeClient, self).__init__()
         self.editor = editor
-        self.launcher = launcher
+        self.config = config
 
         self.log = setup_logger()
         self.log.debug('__init__: in')
         self.editor.initialize()
 
         self.ws = None
-        self.ensime = None
-        self.ensime_server = None
+        self.server = None  # TODO: try to get rid of this (reconnect)
 
         self.call_id = 0
         self.call_options = {}
+        self.debug_thread_id = None
         self.refactor_id = 1
         self.refactorings = {}
 
         # Queue for messages received from the ensime server.
         self.queue = Queue()
+
         self.suggestions = None
         self.completion_timeout = 10  # seconds
         self.completion_started = False
@@ -109,13 +107,12 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         self.full_types_enabled = False
         """Whether fully-qualified types are displayed by inspections or not"""
 
-        self.connection_attempts = 0
         self.tmp_diff_folder = tempfile.mkdtemp(prefix='ensime-vim-diffs')
 
-        # By default, don't connect to server more than once
-        self.number_try_connection = 1
+        self.connection_attempts = 0
+        self.connection_retries = 6
+        self.connected = False
 
-        self.debug_thread_id = None
         self.running = True
 
         thread = Thread(name='queue-poller', target=self.queue_poll)
@@ -127,8 +124,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
 
         Value of sleep is low to improve responsiveness.
         """
-        connection_alive = True
-
         while self.running:
             if self.ws:
                 def logger_and_close(msg):
@@ -136,9 +131,9 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
                     if not self.running:
                         # Tear down has been invoked
                         # Prepare to exit the program
-                        connection_alive = False  # noqa: F841
+                        self.disconnect()
                     else:
-                        if not self.number_try_connection:
+                        if self.connection_retries < 1:
                             # Stop everything.
                             self.teardown()
                             self._display_ws_warning()
@@ -147,40 +142,8 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
                     result = self.ws.recv()
                     self.queue.put(result)
 
-            if connection_alive:
+            if self.connected:
                 time.sleep(sleep_t)
-
-    def setup(self, quiet=False, bootstrap_server=False):
-        """Check the classpath and connect to the server if necessary."""
-        def lazy_initialize_ensime():
-            if not self.ensime:
-                called_by = inspect.stack()[4][3]
-                self.log.debug(str(inspect.stack()))
-                self.log.debug('setup(quiet=%s, bootstrap_server=%s) called by %s()',
-                               quiet, bootstrap_server, called_by)
-
-                installed = self.launcher.strategy.isinstalled()
-                if not installed and not bootstrap_server:
-                    if not quiet:
-                        scala = self.launcher.config.get('scala-version')
-                        msg = feedback["prompt_server_install"].format(scala_version=scala)
-                        self.editor.raw_message(msg)
-                    return False
-
-                try:
-                    self.ensime = self.launcher.launch()
-                except InvalidJavaPathError:
-                    self.editor.message('invalid_java')  # TODO: also disable plugin
-
-            return bool(self.ensime)
-
-        def ready_to_connect():
-            if not self.ws and self.ensime.is_ready():
-                self.connect_ensime_server()
-            return True
-
-        # True if ensime is up and connection is ok, otherwise False
-        return self.running and lazy_initialize_ensime() and ready_to_connect()
 
     def _display_ws_warning(self):
         warning = "A WS exception happened, 'ensime-vim' has been disabled. " +\
@@ -191,7 +154,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         """Send something to the ensime server."""
         def reconnect(e):
             self.log.error('send error, reconnecting...', exc_info=True)
-            self.connect_ensime_server()
+            self.connect(self.server, reconnect=True)
             if self.ws:
                 self.ws.send(msg + "\n")
 
@@ -201,47 +164,56 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
                 self.log.debug('send: sending JSON on WebSocket')
                 self.ws.send(msg + "\n")
 
-    def connect_ensime_server(self):
-        """Start initial connection with the server."""
-        self.log.debug('connect_ensime_server: in')
-        server_v2 = isinstance(self, EnsimeClientV2)
+    def connect(self, server, reconnect=False):
+        """Start connection with the server."""
+        self.log.debug('connect: in')
 
-        def disable_completely(e):
-            if e:
-                self.log.error('connection error: %s', e, exc_info=True)
-            self.shutdown_server()
+        if self.connected and not reconnect:
+            return
+        if not self.running:
+            return
+        if self.connection_retries < 1:
             self._display_ws_warning()
+            return
 
-        if self.running and self.number_try_connection:
-            self.number_try_connection -= 1
-            if not self.ensime_server:
-                port = self.ensime.http_port()
-                uri = "websocket" if server_v2 else "jerky"
-                self.ensime_server = gconfig["ensime_server"].format(port, uri)
-            with catch(websocket.WebSocketException, disable_completely):
-                # Use the default timeout (no timeout).
-                options = {"subprotocols": ["jerky"]} if server_v2 else {}
-                options['enable_multithread'] = True
-                self.log.debug("About to connect to %s with options %s",
-                               self.ensime_server, options)
-                self.ws = websocket.create_connection(self.ensime_server, **options)
-            if self.ws:
-                self.send_request({"typehint": "ConnectionInfoReq"})
+        self.connection_retries -= 1
+
+        if not server or not server.isrunning():
+            return
+
+        address = server.address
+        server_v2 = isinstance(self, EnsimeClientV2)  # TODO: factor out to Server, #355
+
+        # Use the default timeout (no timeout).
+        options = {'enable_multithread': True}
+        if server_v2:
+            options['subprotocols'] = ['jerky']
+        self.log.debug("Connecting to %s with options %s", address, options)
+
+        try:
+            self.ws = websocket.create_connection(address, **options)
+        except websocket.WebSocketException as exc:
+            self.connected = False
+            self.log.exception('connection error: %s', exc)
+            self._display_ws_warning()
         else:
-            # If it hits this, number_try_connection is 0
-            disable_completely(None)
+            self.connected = True
+            self.server = server
+            self.send_request({"typehint": "ConnectionInfoReq"})
 
-    def shutdown_server(self):
-        """Shut down server if it is alive."""
-        self.log.debug('shutdown_server: in')
-        if self.ensime:
-            self.ensime.stop()
+    def disconnect(self):
+        """Close the server connection."""
+        self.log.debug('disconnect: in')
+        if self.connected:
+            self.log.debug('closing websocket...')
+            self.ws.close()  # TODO: exception if ws is None
+            self.connected = False
 
     def teardown(self):
-        """Tear down the server or keep it alive."""
+        """Tear down the client and clean up."""
         self.log.debug('teardown: in')
         self.running = False
-        self.shutdown_server()
+        self.disconnect()
         shutil.rmtree(self.tmp_diff_folder, ignore_errors=True)
 
     def send_at_position(self, what, useSelection, where="range"):
@@ -335,16 +307,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         self.start_typechecking()
         self.type_check("")
         self.editor.message('typechecking')
-
-    def en_install(self, args, range=None):
-        """Bootstrap ENSIME server installation.
-
-        Enabling the bootstrapping actually happens in the execute_with_client
-        decorator when this is called, so this function is a no-op endpoint for
-        the Vim command.
-        TODO: this is confusing...
-        """
-        self.log.debug('en_install: in')
 
     def type(self, args, range=None):
         useSelection = 'selection' in args
@@ -615,29 +577,10 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         if (now - start) >= timeout:
             self.log.warning('unqueue: no reply from server for %ss', timeout)
 
-    def unqueue_and_display(self, filename):
-        """Unqueue messages and give feedback to user (if necessary)."""
-        if self.running and self.ws:
-            self.editor.lazy_display_error(filename)
-            self.unqueue()
-
     def tick(self, filename):
-        """Try to connect and display messages in queue."""
-        if self.connection_attempts < 10:
-            # Trick to connect ASAP when
-            # plugin is  started without
-            # user interaction (CursorMove)
-            self.setup(True, False)
-            self.connection_attempts += 1
-        self.unqueue_and_display(filename)
-
-    def vim_enter(self, filename):
-        """Set up EnsimeClient when vim enters.
-
-        This is useful to start the EnsimeLauncher as soon as possible."""
-        success = self.setup(True, False)
-        if success:
-            self.editor.message("start_message")
+        """Unqueue messages and give feedback to user (if necessary)."""
+        self.editor.lazy_display_error(filename)
+        self.unqueue()
 
     def complete_func(self, findstart, base):
         """Handle omni completion."""

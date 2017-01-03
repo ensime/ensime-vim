@@ -211,9 +211,11 @@ class ProtocolHandlerV1(ProtocolHandler):
                        payload['typehint'], call_id)
 
         # :EnDocBrowse or :EnDocUri
+        # TODO: give user an informational message if server responds with
+        #       FalseResponse, e.g. trying to look up docs on your own package code
         url = payload['text']
         if not url.startswith('http'):
-            port = self.ensime.http_port()
+            port = self.server.port
             url = gconfig['localhost'].format(port, url)
 
         options = self.call_options.get(call_id)

@@ -53,7 +53,9 @@ class EnsimeProcess(object):
             return False
 
     def http_port(self):
-        return int(Util.read_file(os.path.join(self.cache_dir, "http")))
+        portfile = os.path.join(self.cache_dir, 'http')
+        if os.path.exists(portfile):
+            return int(Util.read_file(portfile))
 
 
 class EnsimeLauncher(object):
