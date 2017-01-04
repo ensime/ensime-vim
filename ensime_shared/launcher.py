@@ -205,6 +205,8 @@ class AssemblyJar(LaunchStrategy):
         self.toolsjar = os.path.join(config['java-home'], 'lib', 'tools.jar')
 
     def isinstalled(self):
+        if not os.path.exists(self.base_dir):
+            return False
         scala_minor = self.config['scala-version'][:4]
         for fname in os.listdir(self.base_dir):
             if fnmatch(fname, "ensime_" + scala_minor + "*-assembly.jar"):

@@ -41,6 +41,11 @@ class TestAssemblyJarStrategy:
         self.assemblyjar(strategy)
         assert strategy.isinstalled()
 
+    def test_isinstalled_when_base_dir_does_not_exist(self, tmpdir):
+        bogus = tmpdir / 'nonexisting'
+        strategy = AssemblyJar(config('test-bootstrap.conf'), base_dir=bogus.strpath)
+        assert not strategy.isinstalled()
+
     def test_launch_constructs_classpath(self, strategy, assemblyjar):
         assert strategy.isinstalled()
         with patch.object(strategy, '_start_process', autospec=True) as start:
