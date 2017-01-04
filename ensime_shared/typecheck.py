@@ -1,7 +1,14 @@
 # coding: utf-8
+"""
+The ``typecheck`` module handles behavior for ENSIME typechecking protocols.
+"""
 
 
 class TypecheckHandler(object):
+    """Client handlers for ENSIME typechecking protocol.
+
+    Must be mixed into an ``EnsimeClient``.
+    """
 
     def __init__(self):
         self.currently_buffering_typechecks = False

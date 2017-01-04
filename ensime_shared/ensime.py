@@ -1,4 +1,8 @@
 # coding: utf-8
+"""
+The Python core of the ensime-vim plugin, which bridges between ENSIME
+client/server communication and Vim as the UI, event, and scripting layer.
+"""
 
 import os
 
@@ -11,7 +15,13 @@ from .ticker import Ticker
 
 
 def execute_with_client():
-    """Decorator that gets a client and performs an operation on it."""
+    """Decorator that injects a client instance as the first parameter of the
+    wrapped function.
+
+    The client is associated with the project for the file in the currently
+    active Vim buffer, and will be ``None`` if the file isn't in an ``.ensime``
+    project.
+    """
     def wrapper(f):
 
         def wrapper2(self, *args, **kwargs):
@@ -24,8 +34,8 @@ def execute_with_client():
 
 
 class Ensime(object):
-    """Base class representing the Vim plugin itself. Bridges Vim as a UI and
-    event layer into the Python core.
+    """Base class representing the Vim plugin itself. Dispatches commands/events
+    from Vim to be serviced by an ENSIME client.
 
     There is normally one instance of ``Ensime`` per Vim session. It manages
     potentially multiple ``EnsimeClient`` instances if the user edits more than

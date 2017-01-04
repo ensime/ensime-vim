@@ -1,4 +1,8 @@
 # coding: utf-8
+"""
+The ``config`` module provides an abstraction for ENSIME project configuration
+as well as some configuration of ensime-vim itself.
+"""
 
 import collections
 import os

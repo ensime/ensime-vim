@@ -1,4 +1,8 @@
 # coding: utf-8
+"""
+The ``launcher`` module contains functionality for starting ENSIME server
+processes. This includes "bootstrapping" installation of the server if needed.
+"""
 
 import errno
 import os

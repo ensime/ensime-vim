@@ -1,4 +1,8 @@
 # coding: utf-8
+"""
+The ``protocol`` module implements client behavior for handling messages
+received from ENSIME server.
+"""
 
 import webbrowser
 from operator import itemgetter
@@ -17,12 +21,12 @@ class ProtocolHandler(object):
 
     def __init__(self):
         self.handlers = {}
-        self.register_responses_handlers()
+        self.register_response_handlers()
 
-    def register_responses_handlers(self):
+    def register_response_handlers(self):
         """Register handlers for responses from the server.
 
-        A handler must accept only one parameter: `payload`.
+        A handler must accept only two parameters: `call_id` and `payload`.
         """
         self.handlers["SymbolInfo"] = self.handle_symbol_info
         self.handlers["IndexerReadyEvent"] = self.handle_indexer_ready
@@ -65,37 +69,37 @@ class ProtocolHandler(object):
             self.log.warning('Response has not been handled: %s', Pretty(payload))
 
     def handle_indexer_ready(self, call_id, payload):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def handle_analyzer_ready(self, call_id, payload):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def handle_debug_vm_error(self, call_id, payload):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def handle_import_suggestions(self, call_id, payload):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def handle_package_info(self, call_id, payload):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def handle_symbol_search(self, call_id, payload):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def handle_symbol_info(self, call_id, payload):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def handle_string_response(self, call_id, payload):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def handle_completion_info_list(self, call_id, payload):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def handle_type_inspect(self, call_id, payload):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def show_type(self, call_id, payload):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def handle_source_positions(self, call_id, payload):
         raise NotImplementedError()

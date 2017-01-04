@@ -1,4 +1,7 @@
 # coding: utf-8
+"""
+Provides high-level interfaces for managing ENSIME server processes.
+"""
 
 from .launcher import EnsimeLauncher
 

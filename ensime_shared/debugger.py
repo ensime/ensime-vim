@@ -1,4 +1,8 @@
 # coding: utf-8
+"""
+The ``debugger`` module presents debugger functionality by handling the ENSIME
+debugging protocol.
+"""
 
 import json
 import os
@@ -8,11 +12,15 @@ from ensime_shared.config import feedback
 
 
 class DebuggerClient(object):
-    """This is the implementation of the Ensime debugger client, it must be mixed in
-       with the EnsimeClient to be useful."""
+    """Client handlers for ENSIME debugging protocol.
 
+    Must be mixed into an ``EnsimeClient``.
+    """
 
-# Response Handlers
+    # -------------------------------------------------------------------------
+    # Response Handlers
+    # -------------------------------------------------------------------------
+
     def handle_debug_output(self, call_id, payload):
         """Handle responses `DebugOutputEvent`."""
         self.editor.raw_message(payload["body"].encode("ascii", "ignore"))
@@ -39,7 +47,10 @@ class DebuggerClient(object):
         self.editor.split_window(path, size=20, bufopts=opts)
         tmpfile.close()
 
-# API Call Build/Send
+    # -------------------------------------------------------------------------
+    # API Call Build/Send
+    # -------------------------------------------------------------------------
+
     def debug_set_break(self, args, range=None):
         self.log.debug('debug_set_break: in')
         req = {"line": self.editor.cursor()[0],

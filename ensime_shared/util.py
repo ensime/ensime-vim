@@ -1,4 +1,8 @@
 # coding: utf-8
+"""
+Your typical junk drawer :-) Miscellaneous support functions used throughout
+the package.
+"""
 
 import os
 from contextlib import contextmanager

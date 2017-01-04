@@ -58,12 +58,16 @@ indentation, etc.: https://github.com/derekwyatt/vim-scala
 ------------------------------------------------------------------------------
 PROJECT STATUS                                                 *ensime-status*
 
-This plugin is under active development and some features are not yet
+This plugin is under active development and many features are not yet
 supported (e.g. most of the refactorings, Java support). The |ensime-commands|
 section provides an overview of most currently implemented features.
 
-Hard work is being done in this area and soon those missing features will be
-available for any Vim user. Contributions are also welcome!
+Hard work is being done and with your help those missing features will be
+available for any Vim user, contributions are welcome! Please see the GitHub
+issues for planned work, and the Gitter chat if you want to discuss ideas:
+
+https://github.com/ensime/ensime-vim/issues
+https://gitter.im/ensime/ensime-vim
 
 ------------------------------------------------------------------------------
 GETTING STARTED                                       *ensime-getting-started*
@@ -95,9 +99,12 @@ for Gradle.
                                                             *ensime-bootstrap*
 Bootstrap ENSIME~
 
-The first time you use ensime-vim (per Scala version), it will "bootstrap" the
-ENSIME server installation for you--when opening a Scala file you will be
-prompted to run |:EnInstall|. Do that and give it a minute or two to run.
+Now ensime-vim is ready to go to work. Once you edit a Scala file in a project
+with a `.ensime`, it will launch the ENSIME server for you and connect to it.
+You may first be prompted to run |:EnInstall|, depending on your build tool.
+This actually installs the server if your build tool doesn't support doing
+that automatically. This will take a minute or two to run, only needed once
+per Scala version.
 
 After this, you should see reports in Vim's message area that ENSIME is coming
 up, and the indexer and analyzer are ready. You're ready to go! Compile your
@@ -203,6 +210,10 @@ available.
                                                     *ensime-debugger-commands*
 Debugger Commands~
 
+The basic mechanics of interacting with the debugger are in place, but we
+don't have much Vim UI integration implemented yet. This would be a great area
+to contribute if you're interested in it.
+
                                                            *:EnDebugBacktrace*
 :EnDebugBacktrace
 
@@ -256,7 +267,7 @@ Refactoring Commands~
 :EnAddImport
 
     Prompts for a fully qualified import, adds it to the top of the file, and
-    writes.
+    writes. See also |:EnSuggestImport|.
 
                                                                    *:EnInline*
 :EnInline
@@ -274,7 +285,8 @@ Refactoring Commands~
 :EnRename
 
     Performs a rename refactoring for the symbol under the cursor, and writes
-    the file. Prompts for the new name.
+    the file. Prompts for the new name. This currently has some issues
+    renaming across multiple files, which must be fixed in ENSIME server.
 
                                                             *:EnSuggestImport*
 :EnSuggestImport
@@ -289,7 +301,7 @@ Documented functions are exposed for the scripting pleasure of advanced users.
 Compose features in useful ways we haven't thought of.
 
 Bear in mind that ensime-vim is in a relatively early stage of development and
-APIs may change.
+APIs may change drastically.
                                                             *EnCompleteFunc()*
 EnCompleteFunc()
 
@@ -467,7 +479,16 @@ This triggers type checks after each buffer write of a Scala file. Check
 ==============================================================================
 WORKING WITH ENSIME SERVER                                     *ensime-server*
 
-To trigger an update of ENSIME server, nuke the bootstrap project: >
+If you're using a version of sbt-ensime since 1.12.x, it installs the ENSIME
+server for you and you can use sbt configuration to change the version and
+other customizations -- see the docs for sbt-ensime. If using another build
+tool, your mileage may vary as their feature support often lags behind the sbt
+plugin.
+
+If your build tool doesn't install the server automatically, ensime-vim will
+prompt you to run |:EnInstall| as per the |ensime-bootstrap| section. In this
+case, if a new server version has been released you'll need to nuke the
+bootstrap project on your system to trigger an update: >
 
     $ rm -rf ~/.config/ensime-vim/<your Scala version>
 
@@ -478,6 +499,9 @@ find the logs useful -- relative to your project, check: >
 
     .ensime_cache/ensime-vim.log
     .ensime_cache/server.log
+
+See the next section for details on enabling verbose debugging output that
+includes full message bodies exchanged with the server.
 
 ==============================================================================
 TROUBLESHOOTING AND FAQ                           *ensime-troubleshooting-faq*

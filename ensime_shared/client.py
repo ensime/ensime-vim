@@ -1,4 +1,8 @@
 # coding: utf-8
+"""
+The ``client`` module implements logic for connecting to an ENSIME server and
+exchanging requests and responses.
+"""
 
 import json
 import logging
@@ -32,8 +36,8 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
     need to provide a concrete one or use a ready-mixed subclass like
     ``EnsimeClientV1``.
 
-    Once constructed, a client instance can either connect to an existing
-    ENSIME server or launch a new one with a call to the ``setup()`` method.
+    Once constructed, a client connects to an ENSIME server via the
+    :meth:`connect` method.
 
     Communication with the server is done over a websocket (`self.ws`). Messages
     are sent to the server in the calling thread, while messages are received on
@@ -45,7 +49,8 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
 
     Responses also contain a `typehint` field in their `payload` field, which
     contains the type of the response. This is used to key into `self.handlers`,
-    which stores the a handler per response type.
+    which is a registry of handler functions for each incoming message type
+    (see the mixin :class:`ProtocolHandler`).
     """
 
     def __init__(self, editor, config):

@@ -1,4 +1,11 @@
 # coding: utf-8
+"""
+The ``errors`` module provides functionality for operating on source code errors
+reported by ENSIME.
+
+Todo:
+    Move the exception classes to the package root? (ensimed_shared/__init__.py)
+"""
 
 import os
 

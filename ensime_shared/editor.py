@@ -1,4 +1,9 @@
 # coding: utf-8
+"""
+The ``editor`` module interfaces with the host editor and exposes its
+functionality via constrained interfaces.
+"""
+
 from os import path
 
 from .config import feedback
