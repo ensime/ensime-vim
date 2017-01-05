@@ -27,14 +27,6 @@ function! ensime#is_scala_file() abort
     return s:call_plugin('is_scala_file', [])
 endfunction
 
-function! ensime#on_receive(name, callback) abort
-    return s:call_plugin('on_receive', [a:name, a:callback])
-endfunction
-
-function! ensime#send_request(request) abort
-    return s:call_plugin('send_request', [a:request])
-endfunction
-
 function! ensime#fun_en_complete_func(findstart, base) abort
     return s:call_plugin('fun_en_complete_func', [a:findstart, a:base])
 endfunction

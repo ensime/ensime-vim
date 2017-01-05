@@ -114,7 +114,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         self.call_options = {}
         self.refactor_id = 1
         self.refactorings = {}
-        self.receive_callbacks = {}
 
         # Queue for messages received from the ensime server.
         self.queue = Queue()
@@ -179,11 +178,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
 
             if connection_alive:
                 time.sleep(sleep_t)
-
-    def on_receive(self, name, callback):
-        """Executed when a response is received from the server."""
-        self.log.debug('on_receive: %s', callback)
-        self.receive_callbacks[name] = callback
 
     def setup(self, quiet=False, bootstrap_server=False):
         """Check the classpath and connect to the server if necessary."""
@@ -628,13 +622,9 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
 
     def unqueue(self, timeout=10, should_wait=False):
         """Unqueue all the received ensime responses for a given file."""
-        def trigger_callbacks(_json):
-            for name in self.receive_callbacks:
-                self.log.debug('launching callback: %s', name)
-                self.receive_callbacks[name](self, _json["payload"])
-
         start, now = time.time(), time.time()
         wait = self.queue.empty() and should_wait
+
         while (not self.queue.empty() or wait) and (now - start) < timeout:
             if wait and self.queue.empty():
                 time.sleep(0.25)
@@ -650,7 +640,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
                     # Watch out, it may not have callId
                     call_id = _json.get("callId")
                     if _json["payload"]:
-                        trigger_callbacks(_json)
                         self.handle_incoming_response(call_id, _json["payload"])
                 else:
                     self.log.debug('unqueue: nil or None received')

@@ -272,11 +272,3 @@ class Ensime(object):
             # Invoked by vim
             findstart = findstart_and_base
         return client.complete_func(findstart, base)
-
-    @execute_with_client()
-    def on_receive(self, client, name, callback):
-        client.on_receive(name, callback)
-
-    @execute_with_client()
-    def send_request(self, client, request):
-        client.send_request(request)
