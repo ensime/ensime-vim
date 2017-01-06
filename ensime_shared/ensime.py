@@ -81,6 +81,11 @@ class Ensime(object):
         for c in self.clients.values():
             c.teardown()
 
+    def restart(self):
+        """Restarting servers..."""
+        for c in self.clients.values():
+            c.restart_server()
+
     def current_client(self, quiet, bootstrap_server, create_client):
         """Return the client for current file in the editor."""
         current_file = self._vim.current.buffer.name

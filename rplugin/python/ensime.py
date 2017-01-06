@@ -108,6 +108,10 @@ class NeovimEnsime(Ensime):
     def com_en_debug_start(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_debug_start(*args, **kwargs)
 
+    @neovim.command('EnRestart', **command_params)
+    def com_en_restart(self, *args, **kwargs):
+        super(NeovimEnsime, self).restart()
+
     @neovim.command('EnInstall', **command_params)
     def com_en_install(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_install(*args, **kwargs)

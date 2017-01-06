@@ -115,17 +115,20 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         self.number_try_connection = 1
 
         self.debug_thread_id = None
-        self.running = True
 
-        thread = Thread(name='queue-poller', target=self.queue_poll)
-        thread.daemon = True
-        thread.start()
+        self.start_polling()
 
         self.websocket_exists = module_exists("websocket")
         if not self.websocket_exists:
             self.tell_module_missing("websocket-client")
         if not module_exists("sexpdata"):
             self.tell_module_missing("sexpdata")
+
+    def start_polling(self):
+        self.running = True
+        thread = Thread(name='queue-poller', target=self.queue_poll)
+        thread.daemon = True
+        thread.start()
 
     def queue_poll(self, sleep_t=0.5):
         """Put new messages on the queue as they arrive. Blocking in a thread.
@@ -135,9 +138,11 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         connection_alive = True
 
         while self.running:
+            self.log.debug('Polling...')
             if self.ws:
                 def logger_and_close(msg):
                     self.log.error('Websocket exception', exc_info=True)
+                    self.log.debug(self.running)
                     if not self.running:
                         # Tear down has been invoked
                         # Prepare to exit the program
@@ -250,7 +255,11 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         """Shut down server if it is alive."""
         self.log.debug('shutdown_server: in')
         if self.ensime and self.toggle_teardown:
+            self.log.debug('Stopping server process...')
+            self.ws.shutdown()
+            self.ws = None
             self.ensime.stop()
+            self.ensime = None
 
     def teardown(self):
         """Tear down the server or keep it alive."""
@@ -258,6 +267,13 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         self.running = False
         self.shutdown_server()
         shutil.rmtree(self.tmp_diff_folder, ignore_errors=True)
+
+    def restart_server(self):
+        """Restart server process"""
+        self.log.debug('restart_server: in')
+        self.teardown()
+        self.start_polling()
+        # self.setup()
 
     def send_at_position(self, what, where="range"):
         self.log.debug('send_at_position: in')

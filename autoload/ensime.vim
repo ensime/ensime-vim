@@ -11,6 +11,10 @@ function! ensime#teardown() abort
     return s:call_plugin('teardown', [])
 endfunction
 
+function! ensime#restart() abort
+    return s:call_plugin('restart', [])
+endfunction
+
 function! ensime#current_client(create, quiet, allow_classpath_file_creation) abort
     return s:call_plugin('current_client', [a:create, a:quiet, a:allow_classpath_file_creation])
 endfunction
