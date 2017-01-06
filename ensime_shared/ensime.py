@@ -167,10 +167,6 @@ class Ensime(object):
             self._ticker.tick(client)
 
     @execute_with_client()
-    def com_en_toggle_teardown(self, client, args, range=None):
-        client.do_toggle_teardown(None, None)
-
-    @execute_with_client()
     def com_en_type_check(self, client, args, range=None):
         client.type_check_cmd(None)
 

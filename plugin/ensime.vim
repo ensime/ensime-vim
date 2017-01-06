@@ -70,7 +70,6 @@ augroup ensime
 augroup END
 
 command! -nargs=* -range EnInstall call ensime#com_en_install([<f-args>], '')
-command! -nargs=* -range EnNoTeardown call ensime#com_en_no_teardown([<f-args>], '')
 command! -nargs=* -range EnTypeCheck call ensime#com_en_type_check([<f-args>], '')
 command! -nargs=* -range EnType call ensime#com_en_type([<f-args>], '')
 command! -nargs=* -range EnUsages call ensime#com_en_usages([<f-args>], '')

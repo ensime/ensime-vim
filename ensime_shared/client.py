@@ -109,7 +109,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         self.full_types_enabled = False
         """Whether fully-qualified types are displayed by inspections or not"""
 
-        self.toggle_teardown = True
         self.connection_attempts = 0
         self.tmp_diff_folder = tempfile.mkdtemp(prefix='ensime-vim-diffs')
 
@@ -235,7 +234,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
     def shutdown_server(self):
         """Shut down server if it is alive."""
         self.log.debug('shutdown_server: in')
-        if self.ensime and self.toggle_teardown:
+        if self.ensime:
             self.ensime.stop()
 
     def teardown(self):
@@ -328,10 +327,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
             {"typehint": what + "AtPointReq",
              "file": self._file_info(),
              "point": pos})
-
-    def do_toggle_teardown(self, args, range=None):
-        self.log.debug('do_toggle_teardown: in')
-        self.toggle_teardown = not self.toggle_teardown
 
     def type_check_cmd(self, args, range=None):
         """Sets the flag to begin buffering typecheck notes & clears any
