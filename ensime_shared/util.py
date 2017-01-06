@@ -51,14 +51,6 @@ def catch(exception, handler=lambda e: None):
         handler(str(e))
 
 
-def module_exists(module_name):
-    res = False
-    with catch(ImportError):
-        __import__(module_name)
-        res = True
-    return res
-
-
 class Pretty(object):
     """Wrapper to pretty-format object's string representation.
 

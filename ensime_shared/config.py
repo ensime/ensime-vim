@@ -29,7 +29,6 @@ feedback = {
     "invalid_java": "Java not found or not executable, verify :java-home in your .ensime config",
     "manual_doc": "Go to {}",
     "missing_debug_class": "You must specify a class to debug",
-    "module_missing": "{} missing: do a `pip install {}` and restart vim",
     "notify_break": "Execution paused at breakpoint line {} in {}",
     "package_inspect_current": "Using currently focused package...",
     "prompt_server_install":

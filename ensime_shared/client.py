@@ -11,12 +11,14 @@ import time
 from subprocess import PIPE, Popen
 from threading import Thread
 
+import websocket
+
 from .config import feedback, gconfig, LOG_FORMAT
 from .debugger import DebuggerClient
 from .errors import InvalidJavaPathError
 from .protocol import ProtocolHandler, ProtocolHandlerV1, ProtocolHandlerV2
 from .typecheck import TypecheckHandler
-from .util import catch, module_exists, Pretty, Util
+from .util import catch, Pretty, Util
 
 # Queue depends on python version
 if sys.version_info > (3, 0):
@@ -121,12 +123,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         thread.daemon = True
         thread.start()
 
-        self.websocket_exists = module_exists("websocket")
-        if not self.websocket_exists:
-            self.tell_module_missing("websocket-client")
-        if not module_exists("sexpdata"):
-            self.tell_module_missing("sexpdata")
-
     def queue_poll(self, sleep_t=0.5):
         """Put new messages on the queue as they arrive. Blocking in a thread.
 
@@ -148,9 +144,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
                             self.teardown()
                             self._display_ws_warning()
 
-                # WebSocket exception may happen
-                # FIXME: What Exception class? Don't catch Exception
-                with catch(Exception, logger_and_close):
+                with catch(websocket.WebSocketException, logger_and_close):
                     result = self.ws.recv()
                     self.queue.put(result)
 
@@ -182,19 +176,12 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
             return bool(self.ensime)
 
         def ready_to_connect():
-            if not self.websocket_exists:
-                return False
             if not self.ws and self.ensime.is_ready():
                 self.connect_ensime_server()
             return True
 
         # True if ensime is up and connection is ok, otherwise False
         return self.running and lazy_initialize_ensime() and ready_to_connect()
-
-    def tell_module_missing(self, name):
-        """Warn users that a module is not available in their machines."""
-        msg = feedback["module_missing"]
-        self.editor.raw_message(msg.format(name, name))
 
     def _display_ws_warning(self):
         warning = "A WS exception happened, 'ensime-vim' has been disabled. " +\
@@ -211,7 +198,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
 
         self.log.debug('send: in')
         if self.running and self.ws:
-            with catch(Exception, reconnect):  # FIXME: what Exception??
+            with catch(websocket.WebSocketException, reconnect):
                 self.log.debug('send: sending JSON on WebSocket')
                 self.ws.send(msg + "\n")
 
@@ -232,14 +219,13 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
                 port = self.ensime.http_port()
                 uri = "websocket" if server_v2 else "jerky"
                 self.ensime_server = gconfig["ensime_server"].format(port, uri)
-            with catch(Exception, disable_completely):
-                from websocket import create_connection
+            with catch(websocket.WebSocketException, disable_completely):
                 # Use the default timeout (no timeout).
                 options = {"subprotocols": ["jerky"]} if server_v2 else {}
                 options['enable_multithread'] = True
                 self.log.debug("About to connect to %s with options %s",
                                self.ensime_server, options)
-                self.ws = create_connection(self.ensime_server, **options)
+                self.ws = websocket.create_connection(self.ensime_server, **options)
             if self.ws:
                 self.send_request({"typehint": "ConnectionInfoReq"})
         else:

@@ -1,21 +1,47 @@
 if exists('g:loaded_ensime') || &cp
     finish
-else
-    if !has('python')
-        echohl WarningMsg
-        echomsg '[ensime] Your Vim build is missing +python support, ensime-vim will not be loaded.'
-        if has('nvim')
-            echomsg '[ensime] Did you remember to `pip2 install neovim`?'
-        else
-            echomsg '[ensime] Please review the installation guide.'
-        endif
-        echohl None
-        finish
-    endif
-
-    " Defer to the rplugin for Neovim
-    if has('nvim') | finish | endif
 endif
+
+function! s:Warn(msg)
+    echohl WarningMsg | echomsg '[ensime] ' . a:msg | echohl None
+endf
+
+if !has('python')
+    call s:Warn('Your Vim build is missing +python support, ensime-vim will not be loaded.')
+    if has('nvim')
+        call s:Warn('Did you remember to `pip2 install neovim`?')
+    else
+        call s:Warn('Please review the installation guide.')
+    endif
+    finish
+endif
+
+" Fail fast if dependencies are missing, we can't do much useful if so.
+" We need to wrap this in a function, see :help script-here
+function! s:DependenciesValid() abort
+    python <<PY
+import vim
+try:
+    import sexpdata
+    import websocket
+
+    vim.vars['ensime_deps_valid'] = True
+    del sexpdata # Clean up the shared interpreter namespace
+    del websocket
+except ImportError:
+    vim.vars['ensime_deps_valid'] = False
+PY
+
+    return g:ensime_deps_valid
+endfunction
+
+if !s:DependenciesValid()
+    call s:Warn('A dependency is missing, please `pip2 install sexpdata websocket-client` and restart Vim.')
+    finish
+endif
+
+" For Neovim, defer to the rest to the rplugin
+if has('nvim') | finish | endif
 
 augroup ensime
     autocmd!
