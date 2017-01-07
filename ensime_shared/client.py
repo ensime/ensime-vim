@@ -118,40 +118,41 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         self.connection_retries = 6
         self.connected = False
 
-        self.running = True
+        self.running = False
 
-        thread = Thread(name='queue-poller', target=self.queue_poll)
+    def start_polling(self):
+        self.running = True
+        threadname = self.config['name'] + '-ensime-poller'
+        thread = Thread(name=threadname, target=self._poll_socket)
         thread.daemon = True
         thread.start()
 
-    def queue_poll(self, sleep_t=0.5):
-        """Put new messages on the queue as they arrive. Blocking in a thread.
+    def stop_polling(self):
+        # join the polling thread to definitively stop it?
+        self.running = False
+
+    def _poll_socket(self, sleep_t=0.5):
+        """Put incoming messages on the queue as they arrive. Blocking in a thread.
 
         Value of sleep is low to improve responsiveness.
         """
         while self.running:
-            if self.ws:
-                def logger_and_close(msg):
-                    self.log.error('Websocket exception', exc_info=True)
-                    if not self.running:
-                        # Tear down has been invoked
-                        # Prepare to exit the program
-                        self.disconnect()
-                    else:
-                        if self.connection_retries < 1:
-                            # Stop everything.
-                            self.teardown()
-                            self._display_ws_warning()
-
-                with catch(websocket.WebSocketException, logger_and_close):
-                    result = self.ws.recv()
-                    self.queue.put(result)
-
             if self.connected:
-                time.sleep(sleep_t)
+                try:
+                    self.log.debug('websocket polling blocked awaiting recv')
+                    result = self.ws.recv()
+                    self.log.debug('queueing received message from websocket')
+                    self.queue.put(result)
+                except (websocket.WebSocketException, IOError):
+                    self.log.exception('Websocket exception')
+                    self._display_ws_warning()
+                    self.stop_polling()
+                    self.disconnect()  # Let watchdog try to fix things up
+            else:
+                time.sleep(sleep_t)  # Don't busy-wait for a reconnect
 
     def _display_ws_warning(self):
-        warning = "A WS exception happened, 'ensime-vim' has been disabled. " +\
+        warning = "[ensime-vim] A websocket exception occurred, we'll try to recover... " +\
             "For more information, have a look at the logs in `.ensime_cache`"
         self.editor.raw_message(warning)
 
@@ -160,11 +161,11 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         def reconnect(e):
             self.log.error('send error, reconnecting...', exc_info=True)
             self.connect(self.server, reconnect=True)
-            if self.ws:
+            if self.connected:
                 self.ws.send(msg + "\n")
 
         self.log.debug('send: in')
-        if self.running and self.ws:
+        if self.running and self.connected:
             with catch(websocket.WebSocketException, reconnect):
                 self.log.debug('send: sending JSON on WebSocket')
                 self.ws.send(msg + "\n")
@@ -174,8 +175,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         self.log.debug('connect: in')
 
         if self.connected and not reconnect:
-            return
-        if not self.running:
             return
         if self.connection_retries < 1:
             self._display_ws_warning()
@@ -204,14 +203,19 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         else:
             self.connected = True
             self.server = server
+            if not self.running:
+                self.start_polling()
             self.send_request({"typehint": "ConnectionInfoReq"})
 
     def disconnect(self):
         """Close the server connection."""
         self.log.debug('disconnect: in')
+
+        # Not a graceful close() -- does it matter? Can't find a way to
+        # gracefully close without exception if already blocked on a recv
         if self.connected:
             self.log.debug('closing websocket...')
-            self.ws.close()  # TODO: exception if ws is None
+            self.ws.shutdown()  # TODO: exception if ws is None
             self.connected = False
 
     def teardown(self):
@@ -556,7 +560,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
              "files": [self.editor.path()]})
 
     def unqueue(self, timeout=10, should_wait=False):
-        """Unqueue all the received ensime responses for a given file."""
+        """Dispatch all queued ENSIME responses to handlers."""
         start, now = time.time(), time.time()
         wait = self.queue.empty() and should_wait
 

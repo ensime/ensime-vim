@@ -26,7 +26,7 @@ def execute_with_client():
 
         def wrapper2(self, *args, **kwargs):
             client = self.current_client()
-            if client and client.running:
+            if client:
                 return f(self, client, *args, **kwargs)
         return wrapper2
 
