@@ -59,6 +59,7 @@ class Ensime(object):
         # race condition of autocommand handlers being invoked as they're being
         # defined.
         self._vim = vim
+        self._editor = Editor(vim)
         self._ticker = None
         self.clients = {}
         self.servers = {}
@@ -133,12 +134,11 @@ class Ensime(object):
             self.clients[key].teardown()
 
         config = ProjectConfig(config_path)
-        editor = Editor(self._vim)
 
         if self.using_server_v2:
-            client = EnsimeClientV2(editor, config)
+            client = EnsimeClientV2(self._editor, config)
         else:
-            client = EnsimeClientV1(editor, config)
+            client = EnsimeClientV1(self._editor, config)
 
         self.clients[key] = client
         self._create_ticker()
@@ -163,7 +163,7 @@ class Ensime(object):
 
         If the server isn't installed, prompts the user to install it and returns.
         """
-        editor = Editor(self._vim)
+        editor = self._editor
         server = self.server(config)
 
         if not server.isinstalled():

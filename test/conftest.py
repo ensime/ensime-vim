@@ -21,7 +21,6 @@ def vim():
     """
     def vimeval(expr):
         # Default Editor.isneovim to False.
-        # TODO: easy way to override this; neovim mock fixture?
         if expr == "has('nvim')":
             return False
         else:
@@ -29,3 +28,16 @@ def vim():
 
     attrs = {'eval.side_effect': vimeval}
     return mock.NonCallableMock(name='mockvim', **attrs)
+
+
+@pytest.fixture
+def neovim():
+    """Hopefully this doesn't need to diverge much from the above..."""
+    def vimeval(expr):
+        if expr == "has('nvim')":
+            return True
+        else:
+            return mock.DEFAULT
+
+    attrs = {'eval.side_effect': vimeval}
+    return mock.NonCallableMock(name='mockneovim', **attrs)
