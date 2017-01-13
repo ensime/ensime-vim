@@ -21,15 +21,28 @@ endif
 function! s:DependenciesValid() abort
     python <<PY
 import vim
+
+# TODO: officially drop Vim < 7.4 support, inform users and don't load plugin
+VIM74 = hasattr(vim, 'vars')
+
 try:
     import sexpdata
     import websocket
 
-    vim.vars['ensime_deps_valid'] = True
+    if VIM74:
+        vim.vars['ensime_deps_valid'] = True
+    else:
+        vim.command('let g:ensime_deps_valid = 1')
+
     del sexpdata # Clean up the shared interpreter namespace
     del websocket
 except ImportError:
-    vim.vars['ensime_deps_valid'] = False
+    if VIM74:
+        vim.vars['ensime_deps_valid'] = False
+    else:
+        vim.command('let g:ensime_deps_valid = 0')
+
+del VIM74
 PY
 
     return g:ensime_deps_valid
