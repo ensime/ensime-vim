@@ -200,8 +200,6 @@ class Editor(object):
     # ftplugin/scala/ensime.vim, custom/dotted filetypes & syntax
     def initialize(self):
         """Sets up initial ensime-vim editor settings."""
-        self._vim.options['updatetime'] = 1000
-
         # TODO: This seems wrong, the user setting value is never used anywhere.
         if 'EnErrorStyle' not in self._vim.vars:
             self._vim.vars['EnErrorStyle'] = 'EnError'
@@ -348,11 +346,8 @@ class Editor(object):
             class since it represents "the Vim plugin" as an entity, iterating
             through its list of clients and calling the logic for each.
         """
-        # Make sure no plugin overrides this
-        self._vim.options['updatetime'] = 1000
-        # Keys with no effect, just retrigger CursorHold
-        # http://vim.wikia.com/wiki/Timer_to_execute_commands_periodically
-        self._vim.command(r'call feedkeys("f\e")')
+        self._vim.eval("timer_start({}, 'EnRefreshMessages', {{'repeat': -1}})"
+                       .format(500))
 
     def display_notes(self, notes):
         """Renders "notes" reported by ENSIME, such as typecheck errors."""

@@ -170,6 +170,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
 
                 try:
                     self.ensime = self.launcher.launch()
+                    self.editor.start_timer()
                 except InvalidJavaPathError:
                     self.editor.message('invalid_java')  # TODO: also disable plugin
 
@@ -602,7 +603,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
             self.editor.lazy_display_error(filename)
             self.unqueue()
 
-    def on_cursor_hold(self, filename):
+    def refresh(self, filename):
         """Handler for event CursorHold."""
         if self.connection_attempts < 10:
             # Trick to connect ASAP when
@@ -610,12 +611,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
             # user interaction (CursorMove)
             self.setup(True, False)
             self.connection_attempts += 1
-        self.unqueue_and_display(filename)
-        self.editor.cursorhold()
-
-    def on_cursor_move(self, filename):
-        """Handler for event CursorMoved."""
-        self.setup(True, False)
         self.unqueue_and_display(filename)
 
     def vim_enter(self, filename):

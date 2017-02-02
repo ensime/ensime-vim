@@ -6,7 +6,6 @@ import sys
 
 import neovim
 
-
 def ensime_init_path():
     path = os.path.abspath(inspect.getfile(inspect.currentframe()))
     expected_nvim_path_end = os.path.join('rplugin', 'python', 'ensime.py')
@@ -172,13 +171,9 @@ class NeovimEnsime(Ensime):
     def au_buf_leave(self, *args, **kwargs):
         super(NeovimEnsime, self).au_buf_leave(*args, **kwargs)
 
-    @neovim.autocmd('CursorHold', **autocmd_params)
-    def au_cursor_hold(self, *args, **kwargs):
-        super(NeovimEnsime, self).au_cursor_hold(*args, **kwargs)
-
-    @neovim.autocmd('CursorMoved', **autocmd_params)
-    def au_cursor_moved(self, *args, **kwargs):
-        super(NeovimEnsime, self).au_cursor_moved(*args, **kwargs)
+    @neovim.function('EnRefreshMessages', sync=True)
+    def refresh_messages(self, timer):
+        super(NeovimEnsime, self).refresh_messages()
 
     @neovim.function('EnCompleteFunc', sync=True)
     def fun_en_complete_func(self, *args, **kwargs):

@@ -278,12 +278,10 @@ class Ensime(object):
         client.buffer_leave(filename)
 
     @execute_with_client()
-    def au_cursor_hold(self, client, filename):
-        client.on_cursor_hold(filename)
-
-    @execute_with_client(quiet=True)
-    def au_cursor_moved(self, client, filename):
-        client.on_cursor_move(filename)
+    def refresh_messages(self, client):
+        filename = client.editor.path()
+        if filename.endswith(".scala"):
+            client.refresh(filename)
 
     @execute_with_client()
     def fun_en_complete_func(self, client, findstart_and_base, base=None):
