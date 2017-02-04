@@ -6,6 +6,8 @@ from .client import EnsimeClientV1, EnsimeClientV2
 from .config import ProjectConfig
 from .editor import Editor
 from .launcher import EnsimeLauncher
+from .util import is_buffer_ensime_compatible
+from .ticker import Ticker
 
 
 def execute_with_client(quiet=False,
@@ -48,12 +50,18 @@ class Ensime(object):
         # race condition of autocommand handlers being invoked as they're being
         # defined.
         self._vim = vim
+        self._ticker = None
         self.clients = {}
 
     @property
     def using_server_v2(self):
         """bool: Whether user has configured the plugin to use ENSIME v2 protocol."""
         return bool(self.get_setting('server_v2', 0))
+
+    def is_buffer_ensime_compatible(self):
+        """Return True if the current buffer is supported by Ensime."""
+        current_filetype = self._vim.eval('&filetype')
+        return current_filetype in ['scala', 'java']
 
     def get_setting(self, key, default):
         """Returns the value of a Vim variable ``g:ensime_{key}``
@@ -119,6 +127,12 @@ class Ensime(object):
         else:
             return EnsimeClientV1(editor, launcher)
 
+    def _create_ticker(self):
+        """Create and start the periodic ticker."""
+        if not self._ticker:
+            self._ticker = Ticker(self._vim)
+
+
     def disable_plugin(self):
         """Disable ensime-vim, in the event of an error we can't usefully
         recover from.
@@ -146,6 +160,14 @@ class Ensime(object):
                 paths.append(os.path.expanduser(path))
 
         return paths
+
+    def tick_clients(self):
+        """Trigger the periodic tick function in the client."""
+        if not self._ticker:
+            self._create_ticker()
+
+        for client in self.clients.values():
+            self._ticker.tick(client)
 
     @execute_with_client()
     def com_en_toggle_teardown(self, client, args, range=None):
@@ -274,20 +296,24 @@ class Ensime(object):
         self.teardown()
 
     @execute_with_client()
+    def au_cursor_hold(self, client, filename):
+        self.tick_clients()
+
+    @execute_with_client()
+    def au_cursor_moved(self, client, filename):
+        self.tick_clients()
+
+    def fun_en_tick(self, timer):
+        self.tick_clients()
+
+    @execute_with_client()
     def au_buf_leave(self, client, filename):
         client.buffer_leave(filename)
 
     @execute_with_client()
-    def refresh_messages(self, client):
-        filename = client.editor.path()
-        if filename.endswith(".scala"):
-            client.refresh(filename)
-
-    @execute_with_client()
     def fun_en_complete_func(self, client, findstart_and_base, base=None):
         """Invokable function from vim and neovim to perform completion."""
-        current_filetype = self._vim.eval('&filetype')
-        if current_filetype not in ['scala', 'java']:
+        if not is_buffer_ensime_compatible(self._vim):
             return
 
         if isinstance(findstart_and_base, list):

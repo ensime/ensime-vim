@@ -61,6 +61,10 @@ augroup ensime
     autocmd VimLeave *.java,*.scala call ensime#au_vim_leave(expand("<afile>"))
     autocmd VimEnter *.java,*.scala call ensime#au_vim_enter(expand("<afile>"))
     autocmd BufLeave *.java,*.scala call ensime#au_buf_leave(expand("<afile>"))
+    if !has('timers'):
+        autocmd CursorHold *.java,*.scala call ensime#au_cursor_hold(expand("<afile>"))
+        autocmd CursorMoved *.java,*.scala call ensime#au_cursor_moved(expand("<afile>"))
+    endif
 augroup END
 
 command! -nargs=* -range EnInstall call ensime#com_en_install([<f-args>], '')
@@ -98,6 +102,10 @@ endfunction
 
 function! EnCompleteFunc(a, b) abort
     return ensime#fun_en_complete_func(a:a, a:b)
+endfunction
+
+function! EnTick(timer) abort
+    return ensime#fun_en_tick(a:timer)
 endfunction
 
 let g:loaded_ensime = 1

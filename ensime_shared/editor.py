@@ -334,21 +334,6 @@ class Editor(object):
 
         return ".".join(fqn)
 
-    def cursorhold(self):
-        """Stuff that EnsimeClient does on CursorHold.
-
-        Todo:
-            This is a temporary placeholder for further refactoring.
-
-            IMO EnsimeClient should not have methods like ``on_cursor_hold``,
-            it's the wrong layer of abstraction for handlers of editor events.
-            I'm not sure where these should go yet though -- maybe the Ensime
-            class since it represents "the Vim plugin" as an entity, iterating
-            through its list of clients and calling the logic for each.
-        """
-        self._vim.eval("timer_start({}, 'EnRefreshMessages', {{'repeat': -1}})"
-                       .format(500))
-
     def display_notes(self, notes):
         """Renders "notes" reported by ENSIME, such as typecheck errors."""
 

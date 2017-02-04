@@ -170,7 +170,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
 
                 try:
                     self.ensime = self.launcher.launch()
-                    self.editor.start_timer()
                 except InvalidJavaPathError:
                     self.editor.message('invalid_java')  # TODO: also disable plugin
 
@@ -603,8 +602,8 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
             self.editor.lazy_display_error(filename)
             self.unqueue()
 
-    def refresh(self, filename):
-        """Handler for event CursorHold."""
+    def tick(self, filename):
+        """Try to connect and display messages in queue."""
         if self.connection_attempts < 10:
             # Trick to connect ASAP when
             # plugin is  started without

@@ -171,9 +171,17 @@ class NeovimEnsime(Ensime):
     def au_buf_leave(self, *args, **kwargs):
         super(NeovimEnsime, self).au_buf_leave(*args, **kwargs)
 
-    @neovim.function('EnRefreshMessages', sync=True)
-    def refresh_messages(self, timer):
-        super(NeovimEnsime, self).refresh_messages()
+    @neovim.autocmd('CursorHold', **autocmd_params)
+    def au_cursor_hold(self, *args, **kwargs):
+        super(NeovimEnsime, self).au_cursor_hold(*args, **kwargs)
+
+    @neovim.autocmd('CursorMoved', **autocmd_params)
+    def au_cursor_moved(self, *args, **kwargs):
+        super(NeovimEnsime, self).au_cursor_moved(*args, **kwargs)
+
+    @neovim.function('EnTick', sync=True)
+    def tick(self, timer):
+        super(NeovimEnsime, self).fun_en_tick(timer)
 
     @neovim.function('EnCompleteFunc', sync=True)
     def fun_en_complete_func(self, *args, **kwargs):
