@@ -58,11 +58,6 @@ class Ensime(object):
         """bool: Whether user has configured the plugin to use ENSIME v2 protocol."""
         return bool(self.get_setting('server_v2', 0))
 
-    def is_buffer_ensime_compatible(self):
-        """Return True if the current buffer is supported by Ensime."""
-        current_filetype = self._vim.eval('&filetype')
-        return current_filetype in ['scala', 'java']
-
     def get_setting(self, key, default):
         """Returns the value of a Vim variable ``g:ensime_{key}``
         if it is set, and ``default`` otherwise.
