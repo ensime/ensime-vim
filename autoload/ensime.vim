@@ -1,5 +1,5 @@
 if !has('nvim')
-    execute 'silent! pyfile' expand('<sfile>:p').'.py'
+    execute 'silent! pyfile' fnameescape(expand('<sfile>:p').'.py')
     execute ':redraw!'
 endif
 
