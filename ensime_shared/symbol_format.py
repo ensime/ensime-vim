@@ -20,10 +20,14 @@ def completion_to_suggest(completion):
     return res
 
 
+def is_basic_type(completion):
+    return completion["typeInfo"]["typehint"] == "BasicTypeInfo"
+
+
 def formatted_completion_sig(completion):
     """Regenerate signature for methods. Return just the name otherwise"""
     f_result = completion["name"]
-    if not completion["isCallable"]:
+    if is_basic_type(completion):
         # It's a raw type
         return f_result
     elif len(completion["typeInfo"]["paramSections"]) == 0:
@@ -38,7 +42,7 @@ def formatted_completion_sig(completion):
 def formatted_completion_type(completion):
     """Use result type for methods. Return just the member type otherwise"""
     t_info = completion["typeInfo"]
-    return t_info["name"] if not completion["isCallable"] else t_info["resultType"]["name"]
+    return t_info["name"] if is_basic_type(completion) else t_info["resultType"]["name"]
 
 
 def formatted_param_section(section):

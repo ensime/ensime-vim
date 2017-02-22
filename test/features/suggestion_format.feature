@@ -61,19 +61,19 @@ Feature: Format a Completion Suggestion
     Then We get the format (implicit a: A, b: B)
 
   Scenario Outline: Format completion type
-    Given Completion with isCallable <is_callable>
+    Given Completion with typehint <typehint>
     And TypeInfo with type <ctype>
     And TypeInfo with resultType <crtype>
     When We format the completion type
     Then We get the format <ctype_format>
 
   Examples:
-    | is_callable | ctype     | crtype        | ctype_format  |
-    | False       | TheType   | NotUsed       | TheType       |
-    | True        | ACallable | TheResultType | TheResultType |
+    | typehint      | ctype     | crtype        | ctype_format  |
+    | BasicTypeInfo | TheType   | NotUsed       | TheType       |
+    | ArrowTypeInfo | ACallable | TheResultType | TheResultType |
 
   Scenario: Format non-callable completion signature
-    Given Completion with isCallable False
+    Given Completion with typehint BasicTypeInfo
     And Name is nonCallable
     And Sections:
       | implicit | pname | ptype |
@@ -81,7 +81,7 @@ Feature: Format a Completion Suggestion
     Then We get the format nonCallable
 
   Scenario: Format non-params-callable completion signature
-    Given Completion with isCallable True
+    Given Completion with typehint ArrowTypeInfo
     And Name is nonParamsCallable
     And Sections:
       | implicit | pname | ptype |
@@ -89,7 +89,7 @@ Feature: Format a Completion Suggestion
     Then We get the format nonParamsCallable
 
   Scenario: Format callable completion signature
-    Given Completion with isCallable True
+    Given Completion with typehint ArrowTypeInfo
     And Name is theCallable
     And Sections:
       | implicit | pname | ptype |
@@ -100,10 +100,10 @@ Feature: Format a Completion Suggestion
 
   Scenario: Convert completions to suggestions
     Given We have the following completions:
-      | name              | is_callable | ctype        | crtype        | pname | ptype | implicit |
-      | nonCallable       | False       | SomeType     |               |       |       |          |
-      | nonParamsCallable | True        | OtherType    | TheResultType |       |       |          |
-      | theCallable       | True        | CallableType | TheResultType | a     | A     | False    |
+      | name              | typehint      | ctype        | crtype        | pname | ptype | implicit |
+      | nonCallable       | BasicTypeInfo | SomeType     |               |       |       |          |
+      | nonParamsCallable | ArrowTypeInfo | OtherType    | TheResultType |       |       |          |
+      | theCallable       | ArrowTypeInfo | CallableType | TheResultType | a     | A     | False    |
     When We convert completions to suggestions
     Then We get the following suggestions:
       | word              | abbr              | menu          |

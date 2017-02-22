@@ -55,9 +55,9 @@ def format_section(step):
     world.formatted = formatted_param_section(section)
 
 
-@step('Completion with isCallable (.+)')
-def given_completion_callable(step, is_callable):
-    world.is_callable = is_callable
+@step('Completion with typehint (.+)')
+def given_completion_callable(step, typehint):
+    world.typehint = typehint
 
 
 @step('TypeInfo with type (.+)')
@@ -73,9 +73,9 @@ def typeinfo_with_return_type(step, crtype):
 @step('We format the completion type')
 def format_completion_type(step):
     world.completion = {
-        "isCallable": world.is_callable == 'True',
         "typeInfo": {
             "name": world.ctype,
+            "typehint": world.typehint,
             "resultType": {"name": world.crtype}
         }
     }
@@ -103,8 +103,10 @@ def sections(step):
 def format_sig(step):
     completion = {
         "name": world.name,
-        "isCallable": world.is_callable == 'True',
-        "typeInfo": {"paramSections": world.sections}
+        "typeInfo": {
+            "typehint": world.typehint,
+            "paramSections": world.sections
+        }
     }
     world.formatted = formatted_completion_sig(completion)
 
@@ -112,8 +114,10 @@ def format_sig(step):
 def hash_to_completion(h):
     completion = {
         "name": h["name"],
-        "isCallable": h["is_callable"] == 'True',
-        "typeInfo": {"name": h["ctype"]}
+        "typeInfo": {
+            "typehint": h["typehint"],
+            "name": h["ctype"]
+        }
     }
 
     if h["crtype"]:
