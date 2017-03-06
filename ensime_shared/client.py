@@ -245,12 +245,11 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         self.shutdown_server()
         shutil.rmtree(self.tmp_diff_folder, ignore_errors=True)
 
-    def send_at_position(self, what, where="range"):
+    def send_at_position(self, what, useSelection, where="range"):
         self.log.debug('send_at_position: in')
-        b, e = self.editor.start_end_pos()
-        bcol, ecol = b[1], e[1]
-        s, line = ecol - bcol, b[0]
-        self.send_at_point_req(what, self.editor.path(), line, bcol + 1, s, where)
+        b, e = self.editor.selection_pos() if useSelection else self.editor.word_under_cursor_pos()
+        self.log.debug('useSelection: {}, beg: {}, end: {}'.format(useSelection, b, e))
+        self.send_at_point_req(what, self.editor.path(), b[0], b[1], e[0], e[1], where)
 
     # TODO: Should these be in Editor? They're translating to/from ENSIME's
     # coordinate scheme so it's debatable.
@@ -307,13 +306,14 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
                            "fileInfo": self._file_info(),
                            "reload": False})
 
-    def send_at_point_req(self, what, path, row, col, size, where="range"):
+    def send_at_point_req(self, what, path, brow, bcol, erow, ecol, where="range"):
         """Ask the server to perform an operation at a given position."""
-        i = self.get_position(row, col)
+        beg = self.get_position(brow, bcol)
+        end = self.get_position(erow, ecol)
         self.send_request(
             {"typehint": what + "AtPointReq",
              "file": path,
-             where: {"from": i, "to": i + size}})
+             where: {"from": beg, "to": end}})
 
     def do_toggle_teardown(self, args, range=None):
         self.log.debug('do_toggle_teardown: in')
@@ -338,8 +338,9 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         self.log.debug('en_install: in')
 
     def type(self, args, range=None):
-        self.log.debug('type: in')
-        self.send_at_position("Type")
+        useSelection = 'selection' in args
+        self.log.debug('type: in, sel: {}'.format(useSelection))
+        self.send_at_position("Type", useSelection)
 
     def toggle_fulltype(self, args, range=None):
         self.log.debug('toggle_fulltype: in')
@@ -418,13 +419,13 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
     def doc_uri(self, args, range=None):
         """Request doc of whatever at cursor."""
         self.log.debug('doc_uri: in')
-        self.send_at_position("DocUri", "point")
+        self.send_at_position("DocUri", False, "point")
 
     def doc_browse(self, args, range=None):
         """Browse doc of whatever at cursor."""
         self.log.debug('browse: in')
         self.call_options[self.call_id] = {"browse": True}
-        self.send_at_position("DocUri", "point")
+        self.send_at_position("DocUri", False, "point")
 
     def rename(self, new_name, range=None):
         """Request a rename to the server."""
@@ -432,7 +433,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         if not new_name:
             new_name = self.editor.ask_input("Rename to:")
         self.editor.write(noautocmd=True)
-        b, e = self.editor.start_end_pos()
+        b, e = self.editor.word_under_cursor_pos()
         current_file = self.editor.path()
         self.editor.raw_message(current_file)
         self.send_refactor_request(
@@ -451,7 +452,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         """Perform a local inline"""
         self.log.debug('inline: in')
         self.editor.write(noautocmd=True)
-        b, e = self.editor.start_end_pos()
+        b, e = self.editor.word_under_cursor_pos()
         current_file = self.editor.path()
         self.editor.raw_message(current_file)
         self.send_refactor_request(

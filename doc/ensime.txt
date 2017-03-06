@@ -174,7 +174,9 @@ available.
                                                                      *:EnType*
 :EnType
 
-    Displays type of the expression under the cursor.
+    Without parameters it displays type of the expression under the cursor.
+    If 'selection' parameter is included it displays the type of the expression
+    enclosed by the last active visual selection.
 
                                                                 *:EnTypeCheck*
 :EnTypeCheck
@@ -404,12 +406,14 @@ autocommands like this in a monolithic `vimrc`: >
 
     autocmd FileType scala,java
           \ nnoremap <buffer> <silent> <LocalLeader>t :EnType<CR> |
+          \ xnoremap <buffer> <silent> <LocalLeader>t :EnType selection<CR> |
           \ nnoremap <buffer> <silent> <LocalLeader>T :EnTypeCheck<CR>
 
 or the equivalent simple mappings in a `$MYVIMRUNTIME/after/ftplugin` file: >
 
     " ~/.vim/after/ftplugin/scala.vim
     nnoremap <buffer> <silent> <LocalLeader>t :EnType<CR>
+    xnoremap <buffer> <silent> <LocalLeader>t :EnType selection<CR>
     nnoremap <buffer> <silent> <LocalLeader>T :EnTypeCheck<CR>
 
 This is a matter of preference. The former may be easier for sharing common

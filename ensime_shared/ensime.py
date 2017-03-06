@@ -177,7 +177,7 @@ class Ensime(object):
 
     @execute_with_client()
     def com_en_type(self, client, args, range=None):
-        client.type(None)
+        client.type(args)
 
     @execute_with_client()
     def com_en_toggle_fulltype(self, client, args, range=None):

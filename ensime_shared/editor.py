@@ -235,12 +235,19 @@ class Editor(object):
         self._vim.current.window.cursor = (row, col)
 
     # TODO: don't displace user's cursor; can something like ``getpos()`` do this?
-    def start_end_pos(self):
+    def word_under_cursor_pos(self):
         """Return start and end positions of the cursor respectively."""
         self._vim.command('normal e')
         end = self.cursor()
         self._vim.command('normal b')
         beg = self.cursor()
+        return beg, end
+
+    def selection_pos(self):
+        """Return start and end positions of the visual selection respectively."""
+        buff = self._vim.current.buffer
+        beg = buff.mark('<')
+        end = buff.mark('>')
         return beg, end
 
     def path(self):
