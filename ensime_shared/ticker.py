@@ -2,8 +2,6 @@ import neovim
 
 REFRESH_TIMER = 1000
 
-from .util import is_buffer_ensime_compatible
-
 
 class Ticker(object):
 
@@ -18,7 +16,8 @@ class Ticker(object):
     def tick(self, client):
         filename = client.editor.path()
 
-        if not is_buffer_ensime_compatible(self._vim):
+        # XXX is this necessary ?
+        if not client.editor.is_buffer_ensime_compatible():
             return
 
         client.tick(filename)

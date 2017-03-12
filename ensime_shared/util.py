@@ -41,12 +41,6 @@ class Util:
                 break
         return package
 
-def is_buffer_ensime_compatible(_vim):
-    """Return True if the current buffer is supported by Ensime."""
-    current_filetype = _vim.eval('&filetype')
-    return current_filetype in ['scala', 'java']
-
-
 @contextmanager
 def catch(exception, handler=lambda e: None):
     """If exception runs handler."""

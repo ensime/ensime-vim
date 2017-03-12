@@ -117,6 +117,11 @@ class Editor(object):
 
         return choices[choice - 1]
 
+    def is_buffer_ensime_compatible(self):
+        """Return True if the current buffer is supported by Ensime."""
+        current_filetype = self._vim.eval('&filetype')
+        return current_filetype in ['scala', 'java']
+
     def set_buffer_options(self, options, bufnr=None):
         """Set buffer-local options for a buffer, defaulting to current.
 

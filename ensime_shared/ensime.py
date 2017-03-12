@@ -6,7 +6,6 @@ from .client import EnsimeClientV1, EnsimeClientV2
 from .config import ProjectConfig
 from .editor import Editor
 from .launcher import EnsimeLauncher
-from .util import is_buffer_ensime_compatible
 from .ticker import Ticker
 
 
@@ -308,9 +307,6 @@ class Ensime(object):
     @execute_with_client()
     def fun_en_complete_func(self, client, findstart_and_base, base=None):
         """Invokable function from vim and neovim to perform completion."""
-        if not is_buffer_ensime_compatible(self._vim):
-            return
-
         if isinstance(findstart_and_base, list):
             # Invoked by neovim
             findstart = findstart_and_base[0]
