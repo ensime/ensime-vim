@@ -163,6 +163,13 @@ class LaunchStrategy:
         null = open(os.devnull, "r")
         java = os.path.join(self.config['java-home'], 'bin', 'java')
 
+        if(os.name == "nt"):
+            java += ".exe" #the java executable has the .exe extension in windows
+            # windows uses ';' instead of ':' for the classpath sep since ':' is reserved (C:\)
+            # for example  "c:\ensime.jar:c:\scala.jar"  =>  "c:\ensime.jar;c:\scala.jar"
+            # the following ".jar:" hack works because only jar's happen to be on the ensime classpath
+            classpath = classpath.replace(".jar:",".jar;")
+
         if not os.path.exists(java):
             raise InvalidJavaPathError(errno.ENOENT, 'No such file or directory', java)
         elif not os.access(java, os.X_OK):
