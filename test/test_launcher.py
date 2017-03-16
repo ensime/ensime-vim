@@ -53,7 +53,7 @@ class TestAssemblyJarStrategy:
 
         assert start.call_count == 1
         args, _kwargs = start.call_args
-        classpath = args[0].split(':')
+        classpath = args[0]
         assert classpath == [strategy.jar_path,
                              strategy.toolsjar,
                              ] + strategy.config['scala-compiler-jars']
@@ -87,7 +87,7 @@ class TestDotEnsimeStrategy:
 
         assert start.call_count == 1
         args, _kwargs = start.call_args
-        classpath = args[0].split(':')
+        classpath = args[0]
         assert classpath == strategy.classpath
 
     def test_launch_raises_when_not_installed(self, strategy):
