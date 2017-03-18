@@ -163,7 +163,7 @@ class LaunchStrategy:
         log_path = os.path.join(cache_dir, "server.log")
         log = open(log_path, "w")
         null = open(os.devnull, "r")
-        java = os.path.join(self.config['java-home'], 'bin', ('java','java.exe')[os.name == 'nt'] )
+        java = os.path.join(self.config['java-home'], 'bin', 'java' if os.name != 'nt' else 'java.exe')
 
         if not os.path.exists(java):
             raise InvalidJavaPathError(errno.ENOENT, 'No such file or directory', java)
@@ -171,7 +171,7 @@ class LaunchStrategy:
             raise InvalidJavaPathError(errno.EACCES, 'Permission denied', java)
 
         args = (
-            [java, "-cp", (':',';')[os.name == 'nt'].join(classpath)] +
+            [java, "-cp", (':' if os.name != 'nt' else ';').join(classpath)] +
             [a for a in java_flags if a] +
             ["-Densime.config={}".format(self.config.filepath),
              "org.ensime.server.Server"])
