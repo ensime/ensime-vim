@@ -117,9 +117,13 @@ class Ensime(object):
         launcher = EnsimeLauncher(self._vim, config)
 
         if self.using_server_v2:
-            return EnsimeClientV2(editor, launcher)
+            client = EnsimeClientV2(editor, launcher)
         else:
-            return EnsimeClientV1(editor, launcher)
+            client = EnsimeClientV1(editor, launcher)
+
+        self._create_ticker()
+
+        return client
 
     def _create_ticker(self):
         """Create and start the periodic ticker."""
@@ -283,7 +287,6 @@ class Ensime(object):
 
     @execute_with_client(quiet=True)
     def au_vim_enter(self, client, filename):
-        self.tick_clients()
         client.vim_enter(filename)
 
     @execute_with_client()
@@ -300,6 +303,11 @@ class Ensime(object):
 
     def fun_en_tick(self, timer):
         self.tick_clients()
+
+    @execute_with_client()
+    def au_buf_enter(self, client, filename):
+        # Only set up to trigger the creation of a client
+        pass
 
     @execute_with_client()
     def au_buf_leave(self, client, filename):

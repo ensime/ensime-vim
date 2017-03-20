@@ -39,6 +39,10 @@ function! ensime#au_vim_enter(filename) abort
     return s:call_plugin('au_vim_enter', [a:filename])
 endfunction
 
+function! ensime#au_buf_enter(filename) abort
+    return s:call_plugin('au_buf_enter', [a:filename])
+endfunction
+
 function! ensime#au_buf_leave(filename) abort
     return s:call_plugin('au_buf_leave', [a:filename])
 endfunction

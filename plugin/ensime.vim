@@ -64,6 +64,8 @@ augroup ensime
     if !has('timers'):
         autocmd CursorHold *.java,*.scala call ensime#au_cursor_hold(expand("<afile>"))
         autocmd CursorMoved *.java,*.scala call ensime#au_cursor_moved(expand("<afile>"))
+    else
+        autocmd BufEnter *.java,*.scala call ensime#au_buf_enter(expand("<afile>"))
     endif
 augroup END
 

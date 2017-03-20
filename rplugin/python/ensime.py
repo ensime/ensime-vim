@@ -171,6 +171,10 @@ class NeovimEnsime(Ensime):
     def au_buf_leave(self, *args, **kwargs):
         super(NeovimEnsime, self).au_buf_leave(*args, **kwargs)
 
+    @neovim.autocmd('BufEnter', **autocmd_params)
+    def au_buf_enter(self, *args, **kwargs):
+        super(NeovimEnsime, self).au_buf_enter(*args, **kwargs)
+
     @neovim.function('EnTick', sync=True)
     def tick(self, timer):
         super(NeovimEnsime, self).fun_en_tick(timer)
