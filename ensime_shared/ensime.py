@@ -283,6 +283,7 @@ class Ensime(object):
 
     @execute_with_client(quiet=True)
     def au_vim_enter(self, client, filename):
+        self.tick_clients()
         client.vim_enter(filename)
 
     @execute_with_client()
