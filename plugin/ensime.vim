@@ -61,7 +61,7 @@ augroup ensime
     autocmd VimLeave *.java,*.scala call ensime#au_vim_leave(expand("<afile>"))
     autocmd VimEnter *.java,*.scala call ensime#au_vim_enter(expand("<afile>"))
     autocmd BufLeave *.java,*.scala call ensime#au_buf_leave(expand("<afile>"))
-    if !has('timers'):
+    if !has('timers')
         autocmd CursorHold *.java,*.scala call ensime#au_cursor_hold(expand("<afile>"))
         autocmd CursorMoved *.java,*.scala call ensime#au_cursor_moved(expand("<afile>"))
     else

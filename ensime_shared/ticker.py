@@ -1,5 +1,3 @@
-import neovim
-
 REFRESH_TIMER = 1000
 
 

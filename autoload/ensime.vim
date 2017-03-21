@@ -160,7 +160,7 @@ function! ensime#au_cursor_moved(filename) abort
 endfunction
 
 function! ensime#fun_en_tick(timer) abort
-    return s:call_plugin('en_tick', [a:timer])
+    return s:call_plugin('fun_en_tick', [a:timer])
 endfunction
 
 function! s:call_plugin(method_name, args) abort
