@@ -173,7 +173,9 @@ class NeovimEnsime(Ensime):
 
     @neovim.autocmd('BufEnter', **autocmd_params)
     def au_buf_enter(self, *args, **kwargs):
-        # Workaround for issues #388
+        # Workaround for issue #388
+        # TODO: remove it once the Neovim fix has landed in a stable release
+        # (Github issue to do that: #390)
         self._vim.command('call EnTick()')
         super(NeovimEnsime, self).au_buf_enter(*args, **kwargs)
 
