@@ -173,9 +173,11 @@ class NeovimEnsime(Ensime):
 
     @neovim.autocmd('BufEnter', **autocmd_params)
     def au_buf_enter(self, *args, **kwargs):
+        # Workaround for issues #388
+        self._vim.command('call EnTick()')
         super(NeovimEnsime, self).au_buf_enter(*args, **kwargs)
 
-    @neovim.function('EnTick', sync=True)
+    @neovim.function('EnTick')
     def tick(self, timer):
         super(NeovimEnsime, self).fun_en_tick(timer)
 
