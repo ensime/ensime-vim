@@ -263,7 +263,7 @@ class SbtBootstrap(LaunchStrategy):
     Support for this installation method will be dropped after users and build
     tools have some time to catch up. Consider it deprecated.
     """
-    ENSIME_V1 = '1.0.0'
+    ENSIME_V1 = '1.0.1'
     SBT_VERSION = '0.13.13'
     SBT_COURSIER_COORDS = ('io.get-coursier', 'sbt-coursier', '1.0.0-M15')
 
