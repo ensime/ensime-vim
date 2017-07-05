@@ -125,8 +125,13 @@ class ProjectConfig(collections.Mapping):
                 key = str(unwrap_if_sexp_symbol(key)).lstrip(':')
 
                 # Recursively transform nested lists
-                if isinstance(value, list) and value and isinstance(value[0], list):
-                    newdict[key] = [sexp2dict(value[0])]
+                if isinstance(value, list) and value:
+                    if isinstance(value[0], list):
+                        newdict[key] = [sexp2dict(val) for val in value]
+                    elif isinstance(value[0], sexpdata.Symbol):
+                        newdict[key] = sexp2dict(value)
+                    else:
+                        newdict[key] = value
                 else:
                     newdict[key] = value
 
