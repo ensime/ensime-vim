@@ -12,6 +12,9 @@ config = ProjectConfig(confpath.strpath)
 
 def test_parses_dot_ensime():
     assert config.get('scala-version') == '2.11.8'
+    assert config.get('list') == ["a", "b", "c", "d"]
+    assert len(config['nest']) == 2
+    assert config['nest'][0]['id'] == {'config': 'conf1', 'name': 'nested1'}
     assert config['nest'][0]['targets'] == ['abc', 'xyz']
 
 
@@ -26,8 +29,8 @@ def test_knows_its_filepath():
 
 
 def test_is_dict_like():
-    assert set(config.keys()) == set(['name', 'scala-version', 'nest'])
-    assert len(config) == 3
+    assert set(config.keys()) == set(['name', 'scala-version', 'list', 'nest'])
+    assert len(config) == 4
 
 
 def test_fails_when_given_invalid_config():
