@@ -55,7 +55,7 @@ class Ensime(object):
     @property
     def using_server_v2(self):
         """bool: Whether user has configured the plugin to use ENSIME v2 protocol."""
-        return bool(self.get_setting('server_v2', 0))
+        return bool(self.get_setting('server_v2', 1))
 
     def get_setting(self, key, default):
         """Returns the value of a Vim variable ``g:ensime_{key}``
