@@ -1,6 +1,9 @@
 # coding: utf-8
+"""
+The ``client`` module implements logic for connecting to an ENSIME server and
+exchanging requests and responses.
+"""
 
-import inspect
 import json
 import logging
 import os
@@ -13,9 +16,8 @@ from threading import Thread
 
 import websocket
 
-from .config import feedback, gconfig, LOG_FORMAT
+from .config import LOG_FORMAT
 from .debugger import DebuggerClient
-from .errors import InvalidJavaPathError
 from .protocol import ProtocolHandler, ProtocolHandlerV1, ProtocolHandlerV2
 from .typecheck import TypecheckHandler
 from .util import catch, Pretty, Util
@@ -34,8 +36,8 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
     need to provide a concrete one or use a ready-mixed subclass like
     ``EnsimeClientV1``.
 
-    Once constructed, a client instance can either connect to an existing
-    ENSIME server or launch a new one with a call to the ``setup()`` method.
+    Once constructed, a client connects to an ENSIME server via the
+    :meth:`connect` method.
 
     Communication with the server is done over a websocket (`self.ws`). Messages
     are sent to the server in the calling thread, while messages are received on
@@ -47,15 +49,16 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
 
     Responses also contain a `typehint` field in their `payload` field, which
     contains the type of the response. This is used to key into `self.handlers`,
-    which stores the a handler per response type.
+    which is a registry of handler functions for each incoming message type
+    (see the mixin :class:`ProtocolHandler`).
     """
 
-    def __init__(self, editor, launcher):  # noqa: C901 FIXME
+    def __init__(self, editor, config):
         # Our use case of a logger per class instance with independent log files
         # requires a bunch of manual programmatic config :-/
         def setup_logger():
             path = os.path
-            config = self.launcher.config
+            config = self.config
             projectdir = path.abspath(config['root-dir'])
             project = config.get('name', path.basename(projectdir))
             logger = logging.getLogger(__name__).getChild(project)
@@ -65,15 +68,14 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
             else:
                 logger.setLevel(logging.INFO)
 
-            # The launcher also creates this - if we refactored the weird
-            # lazy_initialize_ensime path this could go away. Fixes C901.
+            # The server launcher creates this, but we shouldn't depend on that
+            # for testing, etc.
             logdir = config['cache-dir']
-            if not path.isdir(logdir):
-                try:
-                    os.mkdir(logdir)
-                except OSError:
-                    logger.addHandler(logging.NullHandler())
-                    return logger
+            try:
+                Util.mkdir_p(logdir)
+            except OSError:
+                logger.addHandler(logging.NullHandler())
+                return logger
 
             logfile = path.join(logdir, 'ensime-vim.log')
             handler = logging.FileHandler(logfile, mode='w')
@@ -85,23 +87,24 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
 
         super(EnsimeClient, self).__init__()
         self.editor = editor
-        self.launcher = launcher
+        self.config = config
 
         self.log = setup_logger()
         self.log.debug('__init__: in')
         self.editor.initialize()
 
         self.ws = None
-        self.ensime = None
-        self.ensime_server = None
+        self.server = None  # TODO: try to get rid of this (reconnect)
 
         self.call_id = 0
         self.call_options = {}
+        self.debug_thread_id = None
         self.refactor_id = 1
         self.refactorings = {}
 
         # Queue for messages received from the ensime server.
         self.queue = Queue()
+
         self.suggestions = None
         self.completion_timeout = 10  # seconds
         self.completion_started = False
@@ -109,82 +112,47 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         self.full_types_enabled = False
         """Whether fully-qualified types are displayed by inspections or not"""
 
-        self.toggle_teardown = True
-        self.connection_attempts = 0
         self.tmp_diff_folder = tempfile.mkdtemp(prefix='ensime-vim-diffs')
 
-        # By default, don't connect to server more than once
-        self.number_try_connection = 1
+        self.connection_attempts = 0
+        self.connection_retries = 6
+        self.connected = False
 
-        self.debug_thread_id = None
+        self.running = False
+
+    def start_polling(self):
         self.running = True
-
-        thread = Thread(name='queue-poller', target=self.queue_poll)
+        threadname = self.config['name'] + '-ensime-poller'
+        thread = Thread(name=threadname, target=self._poll_socket)
         thread.daemon = True
         thread.start()
 
-    def queue_poll(self, sleep_t=0.5):
-        """Put new messages on the queue as they arrive. Blocking in a thread.
+    def stop_polling(self):
+        # join the polling thread to definitively stop it?
+        self.running = False
+
+    def _poll_socket(self, sleep_t=0.5):
+        """Put incoming messages on the queue as they arrive. Blocking in a thread.
 
         Value of sleep is low to improve responsiveness.
         """
-        connection_alive = True
-
         while self.running:
-            if self.ws:
-                def logger_and_close(msg):
-                    self.log.error('Websocket exception', exc_info=True)
-                    if not self.running:
-                        # Tear down has been invoked
-                        # Prepare to exit the program
-                        connection_alive = False  # noqa: F841
-                    else:
-                        if not self.number_try_connection:
-                            # Stop everything.
-                            self.teardown()
-                            self._display_ws_warning()
-
-                with catch(websocket.WebSocketException, logger_and_close):
-                    result = self.ws.recv()
-                    self.queue.put(result)
-
-            if connection_alive:
-                time.sleep(sleep_t)
-
-    def setup(self, quiet=False, bootstrap_server=False):
-        """Check the classpath and connect to the server if necessary."""
-        def lazy_initialize_ensime():
-            if not self.ensime:
-                called_by = inspect.stack()[4][3]
-                self.log.debug(str(inspect.stack()))
-                self.log.debug('setup(quiet=%s, bootstrap_server=%s) called by %s()',
-                               quiet, bootstrap_server, called_by)
-
-                installed = self.launcher.strategy.isinstalled()
-                if not installed and not bootstrap_server:
-                    if not quiet:
-                        scala = self.launcher.config.get('scala-version')
-                        msg = feedback["prompt_server_install"].format(scala_version=scala)
-                        self.editor.raw_message(msg)
-                    return False
-
+            if self.connected:
                 try:
-                    self.ensime = self.launcher.launch()
-                except InvalidJavaPathError:
-                    self.editor.message('invalid_java')  # TODO: also disable plugin
-
-            return bool(self.ensime)
-
-        def ready_to_connect():
-            if not self.ws and self.ensime.is_ready():
-                self.connect_ensime_server()
-            return True
-
-        # True if ensime is up and connection is ok, otherwise False
-        return self.running and lazy_initialize_ensime() and ready_to_connect()
+                    self.log.debug('websocket polling blocked awaiting recv')
+                    result = self.ws.recv()
+                    self.log.debug('queueing received message from websocket')
+                    self.queue.put(result)
+                except (websocket.WebSocketException, IOError):
+                    self.log.exception('Websocket exception')
+                    self._display_ws_warning()
+                    self.stop_polling()
+                    self.disconnect()  # Let watchdog try to fix things up
+            else:
+                time.sleep(sleep_t)  # Don't busy-wait for a reconnect
 
     def _display_ws_warning(self):
-        warning = "A WS exception happened, 'ensime-vim' has been disabled. " +\
+        warning = "[ensime-vim] A websocket exception occurred, we'll try to recover... " +\
             "For more information, have a look at the logs in `.ensime_cache`"
         self.editor.raw_message(warning)
 
@@ -192,57 +160,69 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         """Send something to the ensime server."""
         def reconnect(e):
             self.log.error('send error, reconnecting...', exc_info=True)
-            self.connect_ensime_server()
-            if self.ws:
+            self.connect(self.server, reconnect=True)
+            if self.connected:
                 self.ws.send(msg + "\n")
 
         self.log.debug('send: in')
-        if self.running and self.ws:
+        if self.running and self.connected:
             with catch(websocket.WebSocketException, reconnect):
                 self.log.debug('send: sending JSON on WebSocket')
                 self.ws.send(msg + "\n")
 
-    def connect_ensime_server(self):
-        """Start initial connection with the server."""
-        self.log.debug('connect_ensime_server: in')
-        server_v2 = isinstance(self, EnsimeClientV2)
+    def connect(self, server, reconnect=False):
+        """Start connection with the server."""
+        self.log.debug('connect: in')
 
-        def disable_completely(e):
-            if e:
-                self.log.error('connection error: %s', e, exc_info=True)
-            self.shutdown_server()
+        if self.connected and not reconnect:
+            return
+        if self.connection_retries < 1:
             self._display_ws_warning()
+            return
 
-        if self.running and self.number_try_connection:
-            self.number_try_connection -= 1
-            if not self.ensime_server:
-                port = self.ensime.http_port()
-                uri = "websocket" if server_v2 else "jerky"
-                self.ensime_server = gconfig["ensime_server"].format(port, uri)
-            with catch(websocket.WebSocketException, disable_completely):
-                # Use the default timeout (no timeout).
-                options = {"subprotocols": ["jerky"]} if server_v2 else {}
-                options['enable_multithread'] = True
-                self.log.debug("About to connect to %s with options %s",
-                               self.ensime_server, options)
-                self.ws = websocket.create_connection(self.ensime_server, **options)
-            if self.ws:
-                self.send_request({"typehint": "ConnectionInfoReq"})
+        self.connection_retries -= 1
+
+        if not server or not server.isrunning():
+            return
+
+        address = server.address
+        server_v2 = isinstance(self, EnsimeClientV2)  # TODO: factor out to Server, #355
+
+        # Use the default timeout (no timeout).
+        options = {'enable_multithread': True}
+        if server_v2:
+            options['subprotocols'] = ['jerky']
+        self.log.debug("Connecting to %s with options %s", address, options)
+
+        try:
+            self.ws = websocket.create_connection(address, **options)
+        except websocket.WebSocketException as exc:
+            self.connected = False
+            self.log.exception('connection error: %s', exc)
+            self._display_ws_warning()
         else:
-            # If it hits this, number_try_connection is 0
-            disable_completely(None)
+            self.connected = True
+            self.server = server
+            if not self.running:
+                self.start_polling()
+            self.send_request({"typehint": "ConnectionInfoReq"})
 
-    def shutdown_server(self):
-        """Shut down server if it is alive."""
-        self.log.debug('shutdown_server: in')
-        if self.ensime and self.toggle_teardown:
-            self.ensime.stop()
+    def disconnect(self):
+        """Close the server connection."""
+        self.log.debug('disconnect: in')
+
+        # Not a graceful close() -- does it matter? Can't find a way to
+        # gracefully close without exception if already blocked on a recv
+        if self.connected:
+            self.log.debug('closing websocket...')
+            self.ws.shutdown()  # TODO: exception if ws is None
+            self.connected = False
 
     def teardown(self):
-        """Tear down the server or keep it alive."""
+        """Tear down the client and clean up."""
         self.log.debug('teardown: in')
         self.running = False
-        self.shutdown_server()
+        self.disconnect()
         shutil.rmtree(self.tmp_diff_folder, ignore_errors=True)
 
     def send_at_position(self, what, useSelection, where="range"):
@@ -329,10 +309,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
              "file": self._file_info(),
              "point": pos})
 
-    def do_toggle_teardown(self, args, range=None):
-        self.log.debug('do_toggle_teardown: in')
-        self.toggle_teardown = not self.toggle_teardown
-
     def type_check_cmd(self, args, range=None):
         """Sets the flag to begin buffering typecheck notes & clears any
         stale notes before requesting a typecheck from the server"""
@@ -340,16 +316,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         self.start_typechecking()
         self.type_check("")
         self.editor.message('typechecking')
-
-    def en_install(self, args, range=None):
-        """Bootstrap ENSIME server installation.
-
-        Enabling the bootstrapping actually happens in the execute_with_client
-        decorator when this is called, so this function is a no-op endpoint for
-        the Vim command.
-        TODO: this is confusing...
-        """
-        self.log.debug('en_install: in')
 
     def type(self, args, range=None):
         useSelection = 'selection' in args
@@ -594,7 +560,7 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
              "files": [self.editor.path()]})
 
     def unqueue(self, timeout=10, should_wait=False):
-        """Unqueue all the received ensime responses for a given file."""
+        """Dispatch all queued ENSIME responses to handlers."""
         start, now = time.time(), time.time()
         wait = self.queue.empty() and should_wait
 
@@ -620,29 +586,10 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         if (now - start) >= timeout:
             self.log.warning('unqueue: no reply from server for %ss', timeout)
 
-    def unqueue_and_display(self, filename):
-        """Unqueue messages and give feedback to user (if necessary)."""
-        if self.running and self.ws:
-            self.editor.lazy_display_error(filename)
-            self.unqueue()
-
     def tick(self, filename):
-        """Try to connect and display messages in queue."""
-        if self.connection_attempts < 10:
-            # Trick to connect ASAP when
-            # plugin is  started without
-            # user interaction (CursorMove)
-            self.setup(True, False)
-            self.connection_attempts += 1
-        self.unqueue_and_display(filename)
-
-    def vim_enter(self, filename):
-        """Set up EnsimeClient when vim enters.
-
-        This is useful to start the EnsimeLauncher as soon as possible."""
-        success = self.setup(True, False)
-        if success:
-            self.editor.message("start_message")
+        """Unqueue messages and give feedback to user (if necessary)."""
+        self.editor.lazy_display_error(filename)
+        self.unqueue()
 
     def complete_func(self, findstart, base):
         """Handle omni completion."""

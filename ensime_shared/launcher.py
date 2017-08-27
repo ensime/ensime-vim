@@ -1,4 +1,8 @@
 # coding: utf-8
+"""
+The ``launcher`` module contains functionality for starting ENSIME server
+processes. This includes "bootstrapping" installation of the server if needed.
+"""
 
 import errno
 import os
@@ -53,7 +57,9 @@ class EnsimeProcess(object):
             return False
 
     def http_port(self):
-        return int(Util.read_file(os.path.join(self.cache_dir, "http")))
+        portfile = os.path.join(self.cache_dir, 'http')
+        if os.path.exists(portfile):
+            return int(Util.read_file(portfile))
 
 
 class EnsimeLauncher(object):

@@ -1,4 +1,8 @@
 # coding: utf-8
+"""
+Your typical junk drawer :-) Miscellaneous support functions used throughout
+the package.
+"""
 
 import os
 from contextlib import contextmanager
@@ -21,7 +25,7 @@ class Util:
 
     @staticmethod
     def mkdir_p(path):
-        if not os.path.exists(path):
+        if not os.path.isdir(path):
             os.makedirs(path)
 
     @staticmethod

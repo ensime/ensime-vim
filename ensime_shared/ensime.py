@@ -1,26 +1,32 @@
 # coding: utf-8
+"""
+The Python core of the ensime-vim plugin, which bridges between ENSIME
+client/server communication and Vim as the UI, event, and scripting layer.
+"""
 
 import os
 
 from .client import EnsimeClientV1, EnsimeClientV2
-from .config import ProjectConfig
+from .config import feedback, ProjectConfig
 from .editor import Editor
-from .launcher import EnsimeLauncher
+from .errors import InvalidJavaPathError
+from .server import Server
 from .ticker import Ticker
 
 
-def execute_with_client(quiet=False,
-                        bootstrap_server=False,
-                        create_client=True):
-    """Decorator that gets a client and performs an operation on it."""
+def execute_with_client():
+    """Decorator that injects a client instance as the first parameter of the
+    wrapped function.
+
+    The client is associated with the project for the file in the currently
+    active Vim buffer, and will be ``None`` if the file isn't in an ``.ensime``
+    project.
+    """
     def wrapper(f):
 
         def wrapper2(self, *args, **kwargs):
-            client = self.current_client(
-                quiet=quiet,
-                bootstrap_server=bootstrap_server,
-                create_client=create_client)
-            if client and client.running:
+            client = self.current_client()
+            if client:
                 return f(self, client, *args, **kwargs)
         return wrapper2
 
@@ -28,8 +34,8 @@ def execute_with_client(quiet=False,
 
 
 class Ensime(object):
-    """Base class representing the Vim plugin itself. Bridges Vim as a UI and
-    event layer into the Python core.
+    """Base class representing the Vim plugin itself. Dispatches commands/events
+    from Vim to be serviced by an ENSIME client.
 
     There is normally one instance of ``Ensime`` per Vim session. It manages
     potentially multiple ``EnsimeClient`` instances if the user edits more than
@@ -42,6 +48,10 @@ class Ensime(object):
         clients (Mapping[str, EnsimeClient]):
             Active client instances, keyed by the filesystem path to the
             ``.ensime`` configuration for their respective projects.
+
+        servers (Mapping[str, Server]):
+            Active server processes, keyed by the filesystem path to the
+            ``.ensime`` configuration for their respective projects.
     """
 
     def __init__(self, vim):
@@ -49,8 +59,10 @@ class Ensime(object):
         # race condition of autocommand handlers being invoked as they're being
         # defined.
         self._vim = vim
+        self._editor = Editor(vim)
         self._ticker = None
         self.clients = {}
+        self.servers = {}
 
     @property
     def using_server_v2(self):
@@ -82,53 +94,91 @@ class Ensime(object):
         """Say goodbye..."""
         for c in self.clients.values():
             c.teardown()
+        for server in self.servers.values():
+            server.stop()
 
-    def current_client(self, quiet, bootstrap_server, create_client):
-        """Return the client for current file in the editor."""
+    def current_client(self):
+        """Get the client for current file in the editor.
+
+        Returns:
+            Optional[EnsimeClient]
+        """
+        config = self.current_project_config()
+        if config:
+            return self.client_for(config.filepath)
+
+    def current_project_config(self):
+        """Get the project configuration for the current file in the editor.
+
+        Returns:
+            Optional[ProjectConfig]
+        """
         current_file = self._vim.current.buffer.name
         config_path = ProjectConfig.find_from(current_file)
         if config_path:
-            return self.client_for(
-                config_path,
-                quiet=quiet,
-                bootstrap_server=bootstrap_server,
-                create_client=create_client)
+            return ProjectConfig(config_path)
 
-    def client_for(self, config_path, quiet=False, bootstrap_server=False,
-                   create_client=False):
+    def client_for(self, config_path):
         """Get a cached client for a project, otherwise create one."""
-        client = None
-        abs_path = os.path.abspath(config_path)
-        if abs_path in self.clients:
-            client = self.clients[abs_path]
-        elif create_client:
-            client = self.create_client(config_path)
-            if client.setup(quiet=quiet, bootstrap_server=bootstrap_server):
-                self.clients[abs_path] = client
-        return client
+        key = os.path.realpath(config_path)
+        return self.clients.get(key) or self.create_client(config_path)
 
     def create_client(self, config_path):
         """Create an :class:`EnsimeClient` for a project, given its config file path.
 
-        This will launch the ENSIME server for the project as a side effect.
+        If a client already exists for the project, it will be shut down and
+        recreated. Use :meth:`client_for` to avoid this.
         """
+        key = os.path.realpath(config_path)
+        if key in self.clients:
+            self.clients[key].teardown()
+
         config = ProjectConfig(config_path)
-        editor = Editor(self._vim)
-        launcher = EnsimeLauncher(self._vim, config)
 
         if self.using_server_v2:
-            client = EnsimeClientV2(editor, launcher)
+            client = EnsimeClientV2(self._editor, config)
         else:
-            client = EnsimeClientV1(editor, launcher)
+            client = EnsimeClientV1(self._editor, config)
 
+        self.clients[key] = client
         self._create_ticker()
-
         return client
 
     def _create_ticker(self):
         """Create and start the periodic ticker."""
         if not self._ticker:
             self._ticker = Ticker(self._vim)
+
+    def server(self, config):
+        """Get server instance for a project, creating it if needed."""
+        # Could do a defaultdict subclass with __missing__ override?
+        server = self.servers.get(config.filepath)
+        if not server:
+            server = Server(config, self.using_server_v2)
+            self.servers[config.filepath] = server
+        return server
+
+    def start_server(self, config):
+        """Start an ENSIME server process for project with given config.
+
+        If the server isn't installed, prompts the user to install it and returns.
+        """
+        editor = self._editor
+        server = self.server(config)
+
+        if not server.isinstalled():
+            scala = config.get('scala-version')
+            msg = feedback['prompt_server_install'].format(scala_version=scala)
+            editor.raw_message(msg)
+            return server
+
+        try:
+            if server.start():
+                editor.message('start_message')
+        except InvalidJavaPathError:
+            editor.message('invalid_java')  # TODO: also disable plugin
+
+        return server
 
     def disable_plugin(self):
         """Disable ensime-vim, in the event of an error we can't usefully
@@ -164,11 +214,8 @@ class Ensime(object):
             self._create_ticker()
 
         for client in self.clients.values():
+            self.watchdog_client_server_connection(client)
             self._ticker.tick(client)
-
-    @execute_with_client()
-    def com_en_toggle_teardown(self, client, args, range=None):
-        client.do_toggle_teardown(None, None)
 
     @execute_with_client()
     def com_en_type_check(self, client, args, range=None):
@@ -234,9 +281,12 @@ class Ensime(object):
     def com_en_debug_start(self, client, args, range=None):
         client.debug_start(args, range)
 
-    @execute_with_client(bootstrap_server=True)
-    def com_en_install(self, client, args, range=None):
-        client.en_install(args, range)
+    def com_en_install(self):
+        """Handler for ``:EnInstall`` command."""
+        config = self.current_project_config()
+        # TODO: message if called from a non-project file
+        if config:
+            self.server(config).install()
 
     @execute_with_client()
     def com_en_debug_continue(self, client, args, range=None):
@@ -288,29 +338,29 @@ class Ensime(object):
     def com_en_package_inspect(self, client, args, range=None):
         client.inspect_package(args)
 
-    @execute_with_client(quiet=True)
-    def au_vim_enter(self, client, filename):
-        client.vim_enter(filename)
+    def au_vim_enter(self, filename):
+        """Handler for VimEnter autocommand event."""
+        dotensime = ProjectConfig.find_from(filename)
+        if dotensime:
+            self.start_server(ProjectConfig(dotensime))
 
-    @execute_with_client()
-    def au_vim_leave(self, client, filename):
+    def au_vim_leave(self, _filename):
         self.teardown()
 
-    @execute_with_client()
-    def au_cursor_hold(self, client, filename):
+    def au_cursor_hold(self, _filename):
+        """Handler for CursorHold autocommand event."""
         self.tick_clients()
 
-    @execute_with_client()
-    def au_cursor_moved(self, client, filename):
+    def au_cursor_moved(self, _filename):
+        """Handler for CursorMoved autocommand event."""
         self.tick_clients()
 
-    def fun_en_tick(self, timer):
-        self.tick_clients()
+    def au_buf_enter(self, _filename):
+        """Handler for BufEnter autocommand event.
 
-    @execute_with_client()
-    def au_buf_enter(self, client, filename):
-        # Only set up to trigger the creation of a client
-        pass
+        Used only to trigger creation of a client if needed.
+        """
+        self.current_client()
 
     @execute_with_client()
     def au_buf_leave(self, client, filename):
@@ -327,3 +377,17 @@ class Ensime(object):
             # Invoked by vim
             findstart = findstart_and_base
         return client.complete_func(findstart, base)
+
+    def fun_en_tick(self, timer):
+        """Callback registered with Vim timer for plugin's clock mechanism."""
+        self.tick_clients()
+
+    def watchdog_client_server_connection(self, client):
+        """Run periodically to check and maintain client, server, and cxn health."""
+        if not client.connected and client.connection_attempts < 10:
+            config = client.config
+            server = self.server(config)
+            if not server.isrunning():
+                self.start_server(config)
+            client.connect(server)
+            client.connection_attempts += 1

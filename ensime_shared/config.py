@@ -1,4 +1,8 @@
 # coding: utf-8
+"""
+The ``config`` module provides an abstraction for ENSIME project configuration
+as well as some configuration of ensime-vim itself.
+"""
 
 import collections
 import os
@@ -13,7 +17,6 @@ BOOTSTRAPS_ROOT = os.path.join(os.environ['HOME'], '.config', 'ensime-vim')
 LOG_FORMAT = '%(levelname)-8s <%(asctime)s> (%(filename)s:%(lineno)d) - %(message)s'
 
 gconfig = {
-    "ensime_server": "ws://127.0.0.1:{}/{}",
     "localhost": "http://127.0.0.1:{}/{}",
 }
 
@@ -83,7 +86,8 @@ class ProjectConfig(collections.Mapping):
             path (str): Path of a file or directory from where to start searching.
 
         Returns:
-            str: Canonical path of nearest ``.ensime``, or ``None`` if not found.
+            Optional[str]: Canonical path of nearest ``.ensime``, or ``None`` if
+                not found.
         """
         realpath = os.path.realpath(path)
         config_path = os.path.join(realpath, '.ensime')

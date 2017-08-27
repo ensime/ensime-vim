@@ -7,10 +7,6 @@ function! ensime#client_status(config_path, create) abort
     return s:call_plugin('client_status', [a:config_path, a:create])
 endfunction
 
-function! ensime#teardown() abort
-    return s:call_plugin('teardown', [])
-endfunction
-
 function! ensime#current_client(create, quiet, allow_classpath_file_creation) abort
     return s:call_plugin('current_client', [a:create, a:quiet, a:allow_classpath_file_creation])
 endfunction
@@ -45,10 +41,6 @@ endfunction
 
 function! ensime#au_buf_leave(filename) abort
     return s:call_plugin('au_buf_leave', [a:filename])
-endfunction
-
-function! ensime#com_en_no_teardown(args, range) abort
-    return s:call_plugin('com_en_no_teardown', [a:args, a:range])
 endfunction
 
 function! ensime#com_en_type_check(args, range) abort

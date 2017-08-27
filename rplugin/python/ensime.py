@@ -44,10 +44,6 @@ class NeovimEnsime(Ensime):
     def __init__(self, vim):
         super(NeovimEnsime, self).__init__(vim)
 
-    @neovim.command('EnToggleTeardown', **command_params)
-    def com_en_toggle_teardown(self, *args, **kwargs):
-        super(NeovimEnsime, self).com_en_toggle_teardown(*args, **kwargs)
-
     @neovim.command('EnTypeCheck', **command_params)
     def com_en_type_check(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_type_check(*args, **kwargs)

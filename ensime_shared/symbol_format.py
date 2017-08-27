@@ -1,7 +1,7 @@
 # coding: utf-8
-
 """
-Functions for symbols formatting.
+Functions for formatting the presentation of Scala symbols based on ENSIME
+symbol and type metadata.
 """
 
 

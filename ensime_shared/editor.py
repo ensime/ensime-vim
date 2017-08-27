@@ -1,4 +1,9 @@
 # coding: utf-8
+"""
+The ``editor`` module interfaces with the host editor and exposes its
+functionality via constrained interfaces.
+"""
+
 from os import path
 
 from .config import feedback
@@ -9,7 +14,7 @@ class Editor(object):
 
     def __init__(self, driver):
         self._vim = driver
-        self._isneovim = bool(int(self._vim.eval("has('nvim')")))
+        self._isneovim = None
 
         # Old API
         self._errors = []   # Line error structs reported from ENSIME notes
@@ -35,6 +40,8 @@ class Editor(object):
     @property
     def isneovim(self):
         """bool: Whether the underlying editor is Neovim. Use this sparingly."""
+        if not self._isneovim:
+            self._isneovim = bool(int(self._vim.eval("has('nvim')")))
         return self._isneovim
 
     # TODO: make this read-only property-like?
