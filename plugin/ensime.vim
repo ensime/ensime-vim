@@ -18,8 +18,18 @@ endif
 
 " Fail fast if dependencies are missing, we can't do much useful if so.
 " We need to wrap this in a function, see :help script-here
+function! s:UsingPython3()
+    if has('python3')
+        return 1
+    endif
+        return 0
+endfunction
+
+let s:using_python3 = s:UsingPython3()
+let s:python_until_eof = s:using_python3 ? "python3 << EOF" : "python << EOF"
+
 function! s:DependenciesValid() abort
-    python <<PY
+    exec s:python_until_eof
 import vim
 
 # TODO: officially drop Vim < 7.4 support, inform users and don't load plugin
@@ -43,13 +53,13 @@ except ImportError:
         vim.command('let g:ensime_deps_valid = 0')
 
 del VIM74
-PY
+EOF
 
     return g:ensime_deps_valid
 endfunction
 
 if !s:DependenciesValid()
-    call s:Warn('A dependency is missing, please `pip2 install sexpdata websocket-client` and restart Vim.')
+    call s:Warn('A dependency is missing, please `pip install sexpdata websocket-client` and restart Vim.')
     finish
 endif
 
