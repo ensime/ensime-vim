@@ -1,14 +1,9 @@
 # === Test ===
 coverage~=4.2
-lettuce~=0.2.21
-# Note: mock is in stdlib when we get to Python 3
+aloe~=0.1.15
 mock~=2.0
 pytest~=2.9
 pytest-mock~=1.1
-
-# Optional speed-up for Lettuce, but Docker image build issue needs fixing, see:
-# https://github.com/ensime/ensime-docker/pull/8
-# python-Levenshtein~=0.12
 
 # === Dev Tooling ===
 flake8~=2.5

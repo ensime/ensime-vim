@@ -1,4 +1,4 @@
-from lettuce import *
+from aloe import *
 from ensime_shared.symbol_format import *
 from unittest import TestCase
 
@@ -96,7 +96,7 @@ def hash_to_section(h):
 
 @step('Sections:')
 def sections(step):
-    world.sections = map(hash_to_section, step.hashes)
+    world.sections = list(map(hash_to_section, step.hashes))
 
 
 @step('We format the signature')
@@ -129,17 +129,17 @@ def hash_to_completion(h):
 
 @step('We have the following completions:')
 def we_have_completions(step):
-    world.completions = map(hash_to_completion, step.hashes)
+    world.completions = list(map(hash_to_completion, step.hashes))
 
 
 @step('We convert completions to suggestions')
 def convert_completions_to_suggestions(step):
-    world.suggestions = map(completion_to_suggest, world.completions)
+    world.suggestions = list(map(completion_to_suggest, world.completions))
 
 
 @step('We get the following suggestions')
 def we_get_suggestions(step):
-    expected_suggestions = step.hashes
-    for i in xrange(len(expected_suggestions)):
+    expected_suggestions = list(step.hashes)
+    for i in range(len(expected_suggestions)):
         expected_suggestions[i]["dup"] = 1
     tc.assertEqual(world.suggestions, expected_suggestions)
