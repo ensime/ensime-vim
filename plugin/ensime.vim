@@ -6,10 +6,10 @@ function! s:Warn(msg)
     echohl WarningMsg | echomsg '[ensime] ' . a:msg | echohl None
 endf
 
-if !has('python')
-    call s:Warn('Your Vim build is missing +python support, ensime-vim will not be loaded.')
+if !(has('python') || has('python3'))
+    call s:Warn('Your Vim build is missing +python or +python3 support, ensime-vim will not be loaded.')
     if has('nvim')
-        call s:Warn('Did you remember to `pip2 install neovim`?')
+        call s:Warn('Did you remember to `pip install neovim`?')
     else
         call s:Warn('Please review the installation guide.')
     endif
