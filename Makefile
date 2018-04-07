@@ -26,13 +26,13 @@ unit: $(deps)
 
 integration: $(deps)
 	@echo "Running ensime-vim lettuce tests"
-	. $(activate) && lettuce $(features)
+	. $(activate) && aloe $(features)
 
 coverage: $(deps)
 	. $(activate) && \
 		coverage erase && \
 		coverage run --module pytest && \
-		coverage run --append $$(which lettuce) $(features) && \
+		coverage run --append $$(which aloe) $(features) && \
 		coverage html && \
 		coverage report
 	@echo
