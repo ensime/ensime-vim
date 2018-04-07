@@ -6,8 +6,8 @@ function! s:Warn(msg)
     echohl WarningMsg | echomsg '[ensime] ' . a:msg | echohl None
 endf
 
-if !(has('python') || has('python3'))
-    call s:Warn('Your Vim build is missing +python or +python3 support, ensime-vim will not be loaded.')
+if !has('python3')
+    call s:Warn('Your Vim build is missing +python3 support, ensime-vim will not be loaded.')
     if has('nvim')
         call s:Warn('Did you remember to `pip install neovim`?')
     else
@@ -18,18 +18,8 @@ endif
 
 " Fail fast if dependencies are missing, we can't do much useful if so.
 " We need to wrap this in a function, see :help script-here
-function! s:UsingPython3()
-    if has('python3')
-        return 1
-    endif
-        return 0
-endfunction
-
-let s:using_python3 = s:UsingPython3()
-let s:python_until_eof = s:using_python3 ? "python3 << EOF" : "python << EOF"
-
 function! s:DependenciesValid() abort
-    exec s:python_until_eof
+    python3 <<PY
 import vim
 
 # TODO: officially drop Vim < 7.4 support, inform users and don't load plugin
@@ -53,7 +43,7 @@ except ImportError:
         vim.command('let g:ensime_deps_valid = 0')
 
 del VIM74
-EOF
+PY
 
     return g:ensime_deps_valid
 endfunction

@@ -167,30 +167,20 @@ function! ensime#fun_en_tick(timer) abort
     return s:call_plugin('fun_en_tick', [a:timer])
 endfunction
 
-function! s:UsingPython3()
-    if has('python3')
-        return 1
-    endif
-        return 0
-endfunction
-
-let s:using_python3 = s:UsingPython3()
-let s:python_until_eof = s:using_python3 ? "python3 << EOF" : "python << EOF"
-
 function! s:call_plugin(method_name, args) abort
     " TODO: support nvim rpc
     if has('nvim')
       throw 'Call rplugin from vimscript: not supported yet'
     endif
     unlet! g:__error
-    exec s:python_until_eof
+    python3 <<PY
 try:
   import json
   r = getattr(ensime_plugin, vim.eval('a:method_name'))(*vim.eval('a:args'))
   vim.command('let g:__result = ' + json.dumps(([] if r == None else r)))
 except:
   vim.command('let g:__error = ' + json.dumps(str(sys.exc_info()[0]) + ':' + str(sys.exc_info()[1])))
-EOF
+PY
     if exists('g:__error')
       throw g:__error
     endif
