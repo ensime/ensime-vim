@@ -9,7 +9,7 @@ import vim
 
 def ensime_init_path():
     path = os.path.abspath(inspect.getfile(inspect.currentframe()))
-    expected_nvim_path_end = os.path.join('rplugin', 'python', 'ensime.py')
+    expected_nvim_path_end = os.path.join('rplugin', 'python3', 'ensime.py')
     expected_vim_path_end = os.path.join('autoload', 'ensime.vim.py')
     if path.endswith(expected_nvim_path_end):  # nvim rplugin
         sys.path.append(os.path.join(
