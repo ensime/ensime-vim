@@ -4,3 +4,6 @@
 [submodule "ensime_shared/sexpdata"]
 	path = ensime_shared/sexpdata
 	url = https://github.com/tkf/sexpdata.git
+[submodule "ensime_shared/six"]
+	path = ensime_shared/six
+	url = https://github.com/benjaminp/six.git
