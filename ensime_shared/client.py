@@ -25,6 +25,8 @@ if sys.version_info > (3, 0):
 else:
     from Queue import Queue
 
+six_path = os.path.join(os.path.dirname(__file__), 'six')
+sys.path.insert(0, six_path)
 websocket_path = os.path.join(os.path.dirname(__file__), 'websocket-client')
 sys.path.insert(0, websocket_path)
 import websocket
