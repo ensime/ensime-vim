@@ -1,3 +1,5 @@
+sexpdata~=0.0.3
+
 # === Test ===
 coverage~=4.2
 aloe~=0.1.15

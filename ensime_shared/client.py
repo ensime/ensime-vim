@@ -11,7 +11,6 @@ import time
 from subprocess import PIPE, Popen
 from threading import Thread
 
-import websocket
 
 from .config import feedback, gconfig, LOG_FORMAT
 from .debugger import DebuggerClient
@@ -25,6 +24,10 @@ if sys.version_info > (3, 0):
     from queue import Queue
 else:
     from Queue import Queue
+
+websocket_path = os.path.join(os.path.dirname(__file__), 'websocket-client')
+sys.path.insert(0, websocket_path)
+import websocket
 
 
 class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
