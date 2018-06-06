@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import os
+import re
 
 
 class InvalidJavaPathError(OSError):
@@ -31,17 +32,19 @@ class Error(object):
             and cursor[1] < self.e
 
     def get_truncated_message(self, cursor, width):
-        size = len(self.message)
+        message = re.sub(r"\s\s+|[\r\n]", " ", self.message)
+        size = len(message)
         if size < width:
-            return self.message
+            return message
         percent = float(cursor[1] - self.c) / (self.e - self.c)
         center = int(percent * size)
-        start = center - width / 2
-        end = center + width / 2
+        start = int(center - width / 2)
+        end = int(center + width / 2)
         if start < 0:
             start = 0
             end = width
         elif end > size:
             end = size
             start = size - width
-        return self.message[start:end]
+        return message[start:end]
+

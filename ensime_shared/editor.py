@@ -321,6 +321,9 @@ class Editor(object):
         cmd = 'echo "{}"'.format(message.replace('"', '\\"'))
         if silent:
             cmd = 'silent ' + cmd
+        cmd = "let _ensime_showcmd=&showcmd | set noshowcmd | let _ensime_ruler=&ruler | set noruler | " + \
+		cmd + \
+		" | let &showcmd=_ensime_showcmd | let &ruler=_ensime_ruler"
 
         if self.isneovim:
             vim.async_call(vim.command, cmd)
