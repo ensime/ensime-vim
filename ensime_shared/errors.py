@@ -36,8 +36,8 @@ class Error(object):
             return self.message
         percent = float(cursor[1] - self.c) / (self.e - self.c)
         center = int(percent * size)
-        start = center - width / 2
-        end = center + width / 2
+        start = int(center - width / 2)
+        end = int(center + width / 2)
         if start < 0:
             start = 0
             end = width
