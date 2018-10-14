@@ -286,7 +286,7 @@ class SbtBootstrap(LaunchStrategy):
                               .format(self.classpath_file))
 
         classpath = Util.read_file(self.classpath_file) + ':' + self.toolsjar
-        return self._start_process(classpath)
+        return self._start_process(classpath.split(":"))
 
     # TODO: should maybe check if the build.sbt matches spec (versions, etc.)
     def isinstalled(self):
