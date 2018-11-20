@@ -63,10 +63,6 @@ function! ensime#com_en_usages(args, range) abort
     return s:call_plugin('com_en_usages', [a:args, a:range])
 endfunction
 
-function! ensime#com_en_package_inspect(args, range) abort
-    return s:call_plugin('com_en_package_inspect', [a:args, a:range])
-endfunction
-
 function! ensime#com_en_sym_search(args, range) abort
     return s:call_plugin('com_en_sym_search', [a:args, a:range])
 endfunction
@@ -81,10 +77,6 @@ endfunction
 
 function! ensime#com_en_declaration_split(args, range) abort
     return s:call_plugin('com_en_declaration_split', [a:args, a:range])
-endfunction
-
-function! ensime#fun_en_package_decl() abort
-    return s:call_plugin('fun_en_package_decl', [[], []])
 endfunction
 
 function! ensime#com_en_symbol_by_name(args, range) abort

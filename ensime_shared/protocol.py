@@ -43,7 +43,6 @@ class ProtocolHandler(object):
         self.handlers["DebugVmError"] = self.handle_debug_vm_error
         self.handlers["RefactorDiffEffect"] = self.apply_refactor
         self.handlers["ImportSuggestions"] = self.handle_import_suggestions
-        self.handlers["PackageInfo"] = self.handle_package_info
         self.handlers["FalseResponse"] = self.handle_false_response
 
     def handle_incoming_response(self, call_id, payload):
@@ -74,9 +73,6 @@ class ProtocolHandler(object):
         raise NotImplementedError()
 
     def handle_import_suggestions(self, call_id, payload):
-        raise NotImplementedError()
-
-    def handle_package_info(self, call_id, payload):
         raise NotImplementedError()
 
     def handle_symbol_search(self, call_id, payload):
@@ -138,27 +134,6 @@ class ProtocolHandlerV1(ProtocolHandler):
         choice = self.editor.menu('Select class to import:', imports)
         if choice:
             self.add_import(choice)
-
-    def handle_package_info(self, call_id, payload):
-        package = payload["fullName"]
-
-        def add(member, indentLevel):
-            indent = "  " * indentLevel
-            t = member["declAs"]["typehint"] if member["typehint"] == "BasicTypeInfo" else ""
-            line = "{}{}: {}".format(indent, t, member["name"])
-            self.editor.append(line)
-            if indentLevel < 4:
-                for m in member["members"]:
-                    add(m, indentLevel + 1)
-
-        # Create a new buffer 45 columns wide
-        opts = {'buftype': 'nofile', 'bufhidden': 'wipe', 'buflisted': False,
-                'filetype': 'package_info', 'swapfile': False}
-        self.editor.split_window('package_info', vertical=True, size=45, bufopts=opts)
-
-        self.editor.append(str(package))
-        for member in payload["members"]:
-            add(member, 1)
 
     def handle_symbol_search(self, call_id, payload):
         """Handler for symbol search results"""

@@ -215,11 +215,6 @@ class Editor(object):
         # not even sure how this is currently working when only set once.
         self._vim.command('set omnifunc=EnCompleteFunc')
 
-        # TODO: custom filetype ftplugin
-        self._vim.command(
-            'autocmd FileType package_info nnoremap <buffer> <Space> :call EnPackageDecl()<CR>')
-        self._vim.command('autocmd FileType package_info setlocal splitright')
-
     # TODO: make this a R/W property?
     def cursor(self):
         """Get the cursor position in the current window as a ``(row, column)``
@@ -326,30 +321,6 @@ class Editor(object):
             vim.async_call(vim.command, cmd)
         else:
             vim.command(cmd)
-
-    def symbol_for_inspector_line(self, lineno):
-        """Given a line number for the Package Inspector window, returns the
-        fully-qualified name for the symbol on that line.
-        """
-        def indent(line):
-            n = 0
-            for char in line:
-                if char == ' ':
-                    n += 1
-                else:
-                    break
-            return n / 2
-
-        lines = self._vim.current.buffer[:lineno]
-        i = indent(lines[-1])
-        fqn = [lines[-1].split()[-1]]
-
-        for line in reversed(lines):
-            if indent(line) == i - 1:
-                i -= 1
-                fqn.insert(0, line.split()[-1])
-
-        return ".".join(fqn)
 
     def display_notes(self, notes):
         """Renders "notes" reported by ENSIME, such as typecheck errors."""

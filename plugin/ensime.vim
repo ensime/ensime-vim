@@ -75,7 +75,6 @@ command! -nargs=* -range EnTypeCheck call ensime#com_en_type_check([<f-args>], '
 command! -nargs=* -range EnType call ensime#com_en_type([<f-args>], '')
 command! -nargs=* -range EnUsages call ensime#com_en_usages([<f-args>], '')
 command! -nargs=* -range EnSearch call ensime#com_en_sym_search([<f-args>], '')
-command! -nargs=* -range EnShowPackage call ensime#com_en_package_inspect([<f-args>], '')
 command! -nargs=* -range EnDeclaration call ensime#com_en_declaration([<f-args>], '')
 command! -nargs=* -range EnDeclarationSplit call ensime#com_en_declaration_split([<f-args>], '')
 command! -nargs=* -range EnSymbolByName call ensime#com_en_symbol_by_name([<f-args>], '')
@@ -98,10 +97,6 @@ command! -nargs=0 -range EnClients call ensime#com_en_clients([<f-args>], '')
 command! -nargs=* -range EnToggleFullType call ensime#com_en_toggle_fulltype([<f-args>], '')
 command! -nargs=* -range EnOrganizeImports call ensime#com_en_organize_imports([<f-args>], '')
 command! -nargs=* -range EnAddImport call ensime#com_en_add_import([<f-args>], '')
-
-function! EnPackageDecl() abort
-    return ensime#fun_en_package_decl()
-endfunction
 
 function! EnCompleteFunc(a, b) abort
     return ensime#fun_en_complete_func(a:a, a:b)

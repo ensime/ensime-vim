@@ -129,10 +129,6 @@ class NeovimEnsime(Ensime):
     def com_en_debug_next(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_debug_next(*args, **kwargs)
 
-    @neovim.command('EnShowPackage', **command_params)
-    def com_en_package_inspect(self, *args, **kwargs):
-        super(NeovimEnsime, self).com_en_package_inspect(*args, **kwargs)
-
     @neovim.command('EnDebugContinue', **command_params)
     def com_en_debug_continue(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_debug_continue(*args, **kwargs)
@@ -144,10 +140,6 @@ class NeovimEnsime(Ensime):
     @neovim.command('EnRename', **command_params)
     def com_en_rename(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_rename(*args, **kwargs)
-
-    @neovim.function('EnPackageDecl', sync=True)
-    def fun_en_package_decl(self, *args, **kwargs):
-        super(NeovimEnsime, self).fun_en_package_decl(*args, **kwargs)
 
     @neovim.command('EnInline', **command_params)
     def com_en_inline(self, *args, **kwargs):

@@ -30,7 +30,6 @@ feedback = {
     "manual_doc": "Go to {}",
     "missing_debug_class": "You must specify a class to debug",
     "notify_break": "Execution paused at breakpoint line {} in {}",
-    "package_inspect_current": "Using currently focused package...",
     "prompt_server_install":
         "Please run :EnInstall to install the ENSIME server for Scala {scala_version}",
     "spawned_browser": "Opened tab {}",

@@ -381,18 +381,6 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
             "typehint": "SymbolAtPointReq",
             "file": self.editor.path()})
 
-    def inspect_package(self, args):
-        pkg = None
-        if not args:
-            pkg = Util.extract_package_name(self.editor.getlines())
-            self.editor.message('package_inspect_current')
-        else:
-            pkg = args[0]
-        self.send_request({
-            "typehint": "InspectPackageByPathReq",
-            "path": pkg
-        })
-
     def open_declaration(self, args, range=None):
         self.log.debug('open_declaration: in')
         self.symbol_at_point_req(True)

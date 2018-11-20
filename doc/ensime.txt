@@ -18,7 +18,6 @@ CONTENTS                                                     *ensime-contents*
         Refactoring Commands..................|ensime-refactoring-commands|
     Function API..............................|ensime-function-api|
     Usage.....................................|ensime-usage|
-        Package Inspector.....................|ensime-package-inspector|
         Debugger..............................|ensime-debugger|
     Configuration.............................|ensime-configuration|
         Mappings..............................|ensime-mappings|
@@ -184,16 +183,6 @@ available.
     Runs a typecheck on file in the current buffer, displaying any errors and
     warnings in the buffer.
 
-                                                              *:EnShowPackage*
-:EnShowPackage [package]
-
-    Displays a hierarchical view of a package, including all top-level types,
-    in a vertical split. See |ensime-package-inspector| for actions you can
-    take from this window.
-
-    If [package] is given it must be a fully-qualified package name. If not,
-    the package of the current source file is used.
-
                                                                 *:EnUsages*
 :EnUsages
 
@@ -304,29 +293,10 @@ EnCompleteFunc()
 >
     TODO: we should namespace all exposed functions.
 
-TODO: EnPackageDecl? This is an implementation detail for opening items from
-      Package Inspector IIRC. Expose a <Plug> mapping that users can set for
-      that, not the function.
-
 ==============================================================================
 USAGE                                                           *ensime-usage*
 
-    Package Inspector      |ensime-package-inspector|
     Debugger               |ensime-debugger|
-
-------------------------------------------------------------------------------
-PACKAGE INSPECTOR                                   *ensime-package-inspector*
-
-The Package Inspector is a hierarchical view of the members of a package,
-accessed using the |:EnShowPackage| command as described above.
-
-Once in the Inspector buffer, you can jump to the definition of a particular
-symbol by pressing <Space> on the symbol's line. There is a bit of a lag from
-the server, but the symbol's definition will be opened in a new vertical
-split.
-
-Stay tuned for the Inspector to grow new features as additional planned
-server support comes along.
 
 ------------------------------------------------------------------------------
 DEBUGGER                                                     *ensime-debugger*
