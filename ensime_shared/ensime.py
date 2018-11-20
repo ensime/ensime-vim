@@ -199,10 +199,6 @@ class Ensime(object):
         client.symbol_by_name(args, range)
 
     @execute_with_client()
-    def fun_en_package_decl(self, client, args, range=None):
-        client.open_decl_for_inspector_symbol()
-
-    @execute_with_client()
     def com_en_symbol(self, client, args, range=None):
         client.symbol(args, range)
 
@@ -283,10 +279,6 @@ class Ensime(object):
     @execute_with_client()
     def com_en_sym_search(self, client, args, range=None):
         client.symbol_search(args)
-
-    @execute_with_client()
-    def com_en_package_inspect(self, client, args, range=None):
-        client.inspect_package(args)
 
     @execute_with_client(quiet=True)
     def au_vim_enter(self, client, filename):
