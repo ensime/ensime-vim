@@ -2,10 +2,13 @@
 
 import collections
 import os
-
-import sexpdata
+import sys
 
 from ensime_shared.util import Util
+
+sexpdata_path = os.path.join(os.path.dirname(__file__), 'sexpdata')
+sys.path.insert(0, sexpdata_path)
+import sexpdata
 
 BOOTSTRAPS_ROOT = os.path.join(os.environ['HOME'], '.config', 'ensime-vim')
 """Default directory where ENSIME server bootstrap projects will be created."""

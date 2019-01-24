@@ -5,7 +5,7 @@ VENV ?= .venv
 REFORMAT := ensime_shared/ rplugin/
 
 activate := $(VENV)/bin/activate
-requirements := requirements.txt test-requirements.txt
+requirements := test-requirements.txt
 deps := $(VENV)/deps-updated
 
 features := test/features
@@ -16,7 +16,6 @@ $(activate):
 	virtualenv -p $(PYTHON) $(VENV)
 
 $(deps): $(activate) $(requirements)
-	$(VENV)/bin/pip install --upgrade --requirement requirements.txt
 	$(VENV)/bin/pip install --upgrade --requirement test-requirements.txt
 	touch $(deps)
 

@@ -16,43 +16,6 @@ if !has('python3')
     finish
 endif
 
-" Fail fast if dependencies are missing, we can't do much useful if so.
-" We need to wrap this in a function, see :help script-here
-function! s:DependenciesValid() abort
-    python3 <<PY
-import vim
-
-# TODO: officially drop Vim < 7.4 support, inform users and don't load plugin
-VIM74 = hasattr(vim, 'vars')
-
-try:
-    import sexpdata
-    import websocket
-
-    if VIM74:
-        vim.vars['ensime_deps_valid'] = True
-    else:
-        vim.command('let g:ensime_deps_valid = 1')
-
-    del sexpdata # Clean up the shared interpreter namespace
-    del websocket
-except ImportError:
-    if VIM74:
-        vim.vars['ensime_deps_valid'] = False
-    else:
-        vim.command('let g:ensime_deps_valid = 0')
-
-del VIM74
-PY
-
-    return g:ensime_deps_valid
-endfunction
-
-if !s:DependenciesValid()
-    call s:Warn('A dependency is missing, please `pip install sexpdata websocket-client` and restart Vim.')
-    finish
-endif
-
 " For Neovim, defer to the rest to the rplugin
 if has('nvim') | finish | endif
 
